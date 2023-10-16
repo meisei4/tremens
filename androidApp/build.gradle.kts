@@ -7,11 +7,11 @@ plugins {
 kotlin {
     androidTarget()
     sourceSets {
-        val androidMain by getting {
+        //val androidMain by getting {
             dependencies {
                 implementation(project(":shared"))
             }
-        }
+        //}
     }
 }
 
