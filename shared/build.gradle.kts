@@ -21,6 +21,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.0") // replace with the latest version
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material)
@@ -54,6 +55,7 @@ android {
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+
 
     defaultConfig {
         minSdk = (findProperty("android.minSdk") as String).toInt()
