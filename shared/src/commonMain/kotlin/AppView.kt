@@ -16,11 +16,6 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun AppView(viewModel: MainViewModel) {
-//    addNewHabit(TextFieldValue(baseHabit), habitStatus) { updatedStatus ->
-//        habitStatus = updatedStatus
-//        newHabit = TextFieldValue("")
-//    }
-
     Column(
         Modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -28,8 +23,8 @@ fun AppView(viewModel: MainViewModel) {
         AppHeader()
         AddHabitField(viewModel.newHabit.value) { viewModel.newHabit.value = it }
         AddHabitButton {
-            viewModel.addNewHabit { updatedStatus ->
-                viewModel.habitStatus = updatedStatus.toMutableList()
+            viewModel.addNewHabit { updatedHabits ->
+                viewModel.setHabits(updatedHabits)
                 viewModel.newHabit.value = TextFieldValue("")
             }
         }
@@ -51,11 +46,19 @@ fun AddHabitField(newHabit: TextFieldValue, onValueChange: (TextFieldValue) -> U
 
 @Composable
 fun AddHabitButton(onClick: () -> Unit) {
-    Button(onClick = onClick) { Text("Add Habit") }
+    Button(onClick = onClick) { Text("+") }
     Spacer(modifier = Modifier.height(16.dp))
 }
 
-//TODO: WHY DOES THIS NOT ALIGN WITH THE STATUS CIRCLE BUTTONS.......
+@Composable
+fun DayHeader(lastFiveDays: List<String>) {
+    Spacer(modifier = Modifier.height(8.dp))
+    HabitRowHeader("Habit", lastFiveDays)
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
+
+//TODO: WHY DOES THIS NOT ALIGN WITH THE STATUS CIRCLE BUTTONS...
 @Composable
 fun HabitRowHeader(title: String, lastFiveDays: List<String>) {
     Row(
@@ -77,7 +80,7 @@ fun HabitRowHeader(title: String, lastFiveDays: List<String>) {
                 Text(
                     text = day,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f)  // This ensures that each day takes up equal space.
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -85,45 +88,43 @@ fun HabitRowHeader(title: String, lastFiveDays: List<String>) {
 }
 
 @Composable
-fun DayHeader(lastFiveDays: List<String>) {
-    Spacer(modifier = Modifier.height(8.dp))
-    HabitRowHeader("Habit", lastFiveDays)
-    Spacer(modifier = Modifier.height(8.dp))
-}
-
-@Composable
-fun HabitList(viewModel : MainViewModel) {
+fun HabitList(viewModel: MainViewModel) {
     LazyColumn {
-        itemsIndexed(viewModel.habitStatus) { index, habit ->
+        itemsIndexed(viewModel.habits.value) { index, habit ->
             HabitRow(viewModel, index, habit)
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
+
 @Composable
-fun HabitRow(viewModel: MainViewModel, index: Int, habitStatus: Pair<String, List<Boolean>>) {
+fun HabitRow(viewModel: MainViewModel, index: Int, habit: Pair<String, List<Boolean>>) {
+    //TODO lambdas are so ugly in this function, fix it
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DeleteHabitButton(viewModel, index)
-        var habitName = habitStatus.first
+        DeleteHabitButton({ i ->  viewModel.removeHabit(i) }, index)
+
+        val habitName = habit.first
         Text(
             text = habitName,
             style = MaterialTheme.typography.body1,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Start
         )
-        var isDoneList = habitStatus.second
-        StatusCirclesRow(viewModel, habitStatus, isDoneList, modifier = Modifier.weight(4f))
+
+        val isDoneList = habit.second
+
+        StatusCirclesRow({ a, b, c -> viewModel.updateHabitStatus(a,b,c) }, habit, isDoneList, modifier = Modifier.weight(4f))
     }
 }
 
 @Composable
-fun DeleteHabitButton(viewModel: MainViewModel, index: Int) {
-    IconButton(onClick = { viewModel.removeHabit(index) }) {
+fun DeleteHabitButton(removeHabitFunction: (Int) -> Unit, index: Int) {
+    IconButton(onClick = { removeHabitFunction(index) }) {
         Icon(
             imageVector = Icons.Default.Delete,
             contentDescription = null,
@@ -135,8 +136,8 @@ fun DeleteHabitButton(viewModel: MainViewModel, index: Int) {
 
 @Composable
 fun StatusCirclesRow(
-    viewModel: MainViewModel,
-    currentHabit: Pair<String, List<Boolean>>,
+    updateHabitFunction: (Pair<String, List<Boolean>>, Int, Boolean) -> Unit,
+    targetHabit: Pair<String, List<Boolean>>,
     isDoneList: List<Boolean>,
     modifier: Modifier = Modifier
 ) {
@@ -146,19 +147,20 @@ fun StatusCirclesRow(
         modifier = modifier
     ) {
         isDoneList.forEachIndexed { index, isDone ->
-            StatusCircle(isDone) {
-                viewModel.updateHabitStatus(currentHabit, index, isDone)
+            StatusCircle(isDone) { newStatus ->
+                updateHabitFunction(targetHabit, index, newStatus)
             }
         }
     }
 }
 
+
 @Composable
-fun StatusCircle(isDone: Boolean, onToggleStatus: () -> Unit) {
+fun StatusCircle(isDone: Boolean, updateHabitFunction: (Boolean) -> Unit) {
     Box(
         Modifier
             .size(24.dp)
-            .clickable { onToggleStatus() }
+            .clickable { updateHabitFunction(!isDone) } // toggle the status
     ) {
         Canvas(Modifier.fillMaxSize()) {
             drawCircle(
