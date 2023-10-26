@@ -33,7 +33,9 @@ kotlin {
             dependencies {
                 api("androidx.activity:activity-compose:1.7.2")
                 api("androidx.appcompat:appcompat:1.6.1")
+                api("androidx.lifecycle:lifecycle-common:2.6.2")
                 api("androidx.core:core-ktx:1.10.1")
+                api("androidx.compose.ui:ui-tooling-preview:1.5.4")
             }
         }
         val iosX64Main by getting

@@ -13,31 +13,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.*
 
 @Composable
-fun App() {
-    var habitStatus by remember { mutableStateOf(listOf<Pair<String, List<Boolean>>>()) }
-    var newHabit by remember { mutableStateOf(TextFieldValue("")) }
+fun AppView(viewModel: MainViewModel) {
+//    addNewHabit(TextFieldValue(baseHabit), habitStatus) { updatedStatus ->
+//        habitStatus = updatedStatus
+//        newHabit = TextFieldValue("")
+//    }
 
     Column(
         Modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AppHeader()
-        AddHabitField(newHabit) { newHabit = it }
+        AddHabitField(viewModel.newHabit.value) { viewModel.newHabit.value = it }
         AddHabitButton {
-            addNewHabit(newHabit, habitStatus) { updatedStatus ->
-                habitStatus = updatedStatus
-                newHabit = TextFieldValue("")
+            viewModel.addNewHabit { updatedStatus ->
+                viewModel.habitStatus = updatedStatus.toMutableList()
+                viewModel.newHabit.value = TextFieldValue("")
             }
         }
-        DayHeader(getLastFiveDays())
-        HabitList(
-            habitStatus = habitStatus,
-            onStatusUpdate = { updatedHabitStatus -> habitStatus = updatedHabitStatus },
-            onRemoveHabit = { index -> habitStatus = removeHabit(index, habitStatus) }
-        )
+        DayHeader(viewModel.lastFiveDays)
+        HabitList(viewModel)
     }
 }
 
@@ -95,55 +92,38 @@ fun DayHeader(lastFiveDays: List<String>) {
 }
 
 @Composable
-fun HabitList(
-    habitStatus: List<Pair<String, List<Boolean>>>,
-    onStatusUpdate: (List<Pair<String, List<Boolean>>>) -> Unit,
-    onRemoveHabit: (Int) -> Unit
-) {
+fun HabitList(viewModel : MainViewModel) {
     LazyColumn {
-        itemsIndexed(habitStatus) { index, habit ->
-            HabitRow(
-                habitName = habit.first,
-                isDoneList = habit.second,
-                onRemoveHabit = { onRemoveHabit(index) },
-                onToggleStatus = { idx, updatedStatus ->
-                    val updatedHabitStatus = updateHabitStatus(habit, idx, updatedStatus, habitStatus)
-                    onStatusUpdate(updatedHabitStatus)
-                }
-            )
+        itemsIndexed(viewModel.habitStatus) { index, habit ->
+            HabitRow(viewModel, index, habit)
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-fun HabitRow(
-    habitName: String,
-    isDoneList: List<Boolean>,
-    onRemoveHabit: () -> Unit,
-    onToggleStatus: (Int, Boolean) -> Unit
-) {
+fun HabitRow(viewModel: MainViewModel, index: Int, habitStatus: Pair<String, List<Boolean>>) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DeleteHabitButton(onRemoveHabit)
-
+        DeleteHabitButton(viewModel, index)
+        var habitName = habitStatus.first
         Text(
             text = habitName,
             style = MaterialTheme.typography.body1,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Start
         )
-
-        StatusCirclesRow(isDoneList, onToggleStatus, modifier = Modifier.weight(4f))
+        var isDoneList = habitStatus.second
+        StatusCirclesRow(viewModel, habitStatus, isDoneList, modifier = Modifier.weight(4f))
     }
 }
 
 @Composable
-fun DeleteHabitButton(onRemoveHabit: () -> Unit) {
-    IconButton(onClick = onRemoveHabit) {
+fun DeleteHabitButton(viewModel: MainViewModel, index: Int) {
+    IconButton(onClick = { viewModel.removeHabit(index) }) {
         Icon(
             imageVector = Icons.Default.Delete,
             contentDescription = null,
@@ -155,8 +135,9 @@ fun DeleteHabitButton(onRemoveHabit: () -> Unit) {
 
 @Composable
 fun StatusCirclesRow(
+    viewModel: MainViewModel,
+    currentHabit: Pair<String, List<Boolean>>,
     isDoneList: List<Boolean>,
-    onToggleStatus: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -166,7 +147,7 @@ fun StatusCirclesRow(
     ) {
         isDoneList.forEachIndexed { index, isDone ->
             StatusCircle(isDone) {
-                onToggleStatus(index, !isDone)
+                viewModel.updateHabitStatus(currentHabit, index, isDone)
             }
         }
     }
@@ -187,36 +168,6 @@ fun StatusCircle(isDone: Boolean, onToggleStatus: () -> Unit) {
             )
         }
     }
-}
-
-fun updateHabitStatus(
-    currentHabit: Pair<String, List<Boolean>>,
-    index: Int,
-    updatedStatus: Boolean,
-    habitStatus: List<Pair<String, List<Boolean>>>
-): List<Pair<String, List<Boolean>>> {
-    return habitStatus.map { habit ->
-        if (habit.first == currentHabit.first) {
-            habit.first to habit.second.mapIndexed { idx, status ->
-                if (idx == index) updatedStatus else status
-            }
-        } else habit
-    }
-}
-
-fun removeHabit(index: Int, habitStatus: List<Pair<String, List<Boolean>>>): List<Pair<String, List<Boolean>>> {
-    return habitStatus.toMutableList().apply { removeAt(index) }
-}
-
-fun addNewHabit(newHabit: TextFieldValue, habitStatus: List<Pair<String, List<Boolean>>>, onUpdate: (List<Pair<String, List<Boolean>>>) -> Unit) {
-    onUpdate(habitStatus + (newHabit.text to List(5) { false }))
-}
-
-fun getLastFiveDays(): List<String> {
-    val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
-    return List(5) { i ->
-        current.minus(i, DateTimeUnit.DAY).dayOfMonth.toString()
-    }.reversed()
 }
 
 expect fun getPlatformName(): String
