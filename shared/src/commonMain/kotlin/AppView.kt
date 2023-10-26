@@ -16,27 +16,31 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.*
 
 @Composable
-fun App() {
-    var habitStatus by remember { mutableStateOf(listOf<Pair<String, List<Boolean>>>()) }
-    var newHabit by remember { mutableStateOf(TextFieldValue("")) }
+fun AppView(
+    viewModel: MainViewModel
+) {
+//    addNewHabit(TextFieldValue(baseHabit), habitStatus) { updatedStatus ->
+//        habitStatus = updatedStatus
+//        newHabit = TextFieldValue("")
+//    }
 
     Column(
         Modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AppHeader()
-        AddHabitField(newHabit) { newHabit = it }
+        AddHabitField(viewModel.newHabit.value) { viewModel.newHabit.value = it }
         AddHabitButton {
-            addNewHabit(newHabit, habitStatus) { updatedStatus ->
-                habitStatus = updatedStatus
-                newHabit = TextFieldValue("")
+            viewModel.addNewHabit { updatedStatus ->
+                viewModel.habitStatus = updatedStatus.toMutableList()
+                viewModel.newHabit.value = TextFieldValue("")
             }
         }
         DayHeader(getLastFiveDays())
         HabitList(
-            habitStatus = habitStatus,
-            onStatusUpdate = { updatedHabitStatus -> habitStatus = updatedHabitStatus },
-            onRemoveHabit = { index -> habitStatus = removeHabit(index, habitStatus) }
+            habitStatus = viewModel.habitStatus,
+            onStatusUpdate = { updatedHabitStatus -> viewModel.habitStatus = updatedHabitStatus.toMutableList() },
+            onRemoveHabit = { index -> viewModel.habitStatus = removeHabit(index, viewModel.habitStatus).toMutableList() }
         )
     }
 }
@@ -206,10 +210,6 @@ fun updateHabitStatus(
 
 fun removeHabit(index: Int, habitStatus: List<Pair<String, List<Boolean>>>): List<Pair<String, List<Boolean>>> {
     return habitStatus.toMutableList().apply { removeAt(index) }
-}
-
-fun addNewHabit(newHabit: TextFieldValue, habitStatus: List<Pair<String, List<Boolean>>>, onUpdate: (List<Pair<String, List<Boolean>>>) -> Unit) {
-    onUpdate(habitStatus + (newHabit.text to List(5) { false }))
 }
 
 fun getLastFiveDays(): List<String> {
