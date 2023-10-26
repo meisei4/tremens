@@ -1,22 +1,21 @@
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.text.input.TextFieldValue
 
 class MainViewModel(val model: MainModel) : ViewModel() {
-    var habits: MutableState<List<Pair<String, List<Boolean>>>> = mutableStateOf(emptyList())
-    var newHabit: MutableState<TextFieldValue> = mutableStateOf(TextFieldValue(""))
+    var habits: MutableState<List<HabitRowData>> = mutableStateOf(emptyList())
+    var newHabit: MutableState<HabitRowData> = mutableStateOf(HabitRowData("", List(5) { false }))
     var lastFiveDays: List<String> = model.getLastFiveDays()
 
-    fun addNewHabit(onUpdate: (List<Pair<String, List<Boolean>>>) -> Unit) {
-        model.addNewHabit(habits, newHabit.value.text)
+    fun addNewHabit(onUpdate: (List<HabitRowData>) -> Unit) {
+        model.addNewHabit(habits, newHabit.value)
         onUpdate(habits.value)
     }
 
-    fun updateHabitStatus(targetHabit: Pair<String, List<Boolean>>, index: Int, updatedStatus: Boolean) {
+    fun updateHabitStatus(targetHabit: HabitRowData, index: Int, updatedStatus: Boolean) {
         model.updateHabitStatus(habits, targetHabit, index, updatedStatus)
     }
 
-    fun setHabits(updatedHabits: List<Pair<String, List<Boolean>>>) {
+    fun setHabits(updatedHabits: List<HabitRowData>) {
         habits.value = updatedHabits
     }
 

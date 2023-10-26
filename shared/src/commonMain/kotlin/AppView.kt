@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -21,11 +20,13 @@ fun AppView(viewModel: MainViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AppHeader()
-        AddHabitField(viewModel.newHabit.value) { viewModel.newHabit.value = it }
+        AddHabitField(viewModel.newHabit.value.name) { newHabitName ->
+            viewModel.newHabit.value = viewModel.newHabit.value.copy(name = newHabitName)
+        }
         AddHabitButton {
             viewModel.addNewHabit { updatedHabits ->
                 viewModel.setHabits(updatedHabits)
-                viewModel.newHabit.value = TextFieldValue("")
+                viewModel.newHabit.value = HabitRowData("", List(5) { false })
             }
         }
         DayHeader(viewModel.lastFiveDays)
@@ -40,7 +41,7 @@ fun AppHeader() {
 }
 
 @Composable
-fun AddHabitField(newHabit: TextFieldValue, onValueChange: (TextFieldValue) -> Unit) {
+fun AddHabitField(newHabit: String, onValueChange: (String) -> Unit) {
     TextField(value = newHabit, onValueChange = onValueChange, label = { Text("New Habit") })
 }
 
@@ -56,7 +57,6 @@ fun DayHeader(lastFiveDays: List<String>) {
     HabitRowHeader("Habit", lastFiveDays)
     Spacer(modifier = Modifier.height(8.dp))
 }
-
 
 //TODO: WHY DOES THIS NOT ALIGN WITH THE STATUS CIRCLE BUTTONS...
 @Composable
@@ -97,18 +97,17 @@ fun HabitList(viewModel: MainViewModel) {
     }
 }
 
-
 @Composable
-fun HabitRow(viewModel: MainViewModel, index: Int, habit: Pair<String, List<Boolean>>) {
+fun HabitRow(viewModel: MainViewModel, rowIndex: Int, habit: HabitRowData) {
     //TODO lambdas are so ugly in this function, fix it
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DeleteHabitButton({ i ->  viewModel.removeHabit(i) }, index)
+        DeleteHabitButton({ i ->  viewModel.removeHabit(i) }, rowIndex)
 
-        val habitName = habit.first
+        val habitName = habit.name
         Text(
             text = habitName,
             style = MaterialTheme.typography.body1,
@@ -116,7 +115,7 @@ fun HabitRow(viewModel: MainViewModel, index: Int, habit: Pair<String, List<Bool
             textAlign = TextAlign.Start
         )
 
-        val isDoneList = habit.second
+        val isDoneList = habit.status
 
         StatusCirclesRow({ a, b, c -> viewModel.updateHabitStatus(a,b,c) }, habit, isDoneList, modifier = Modifier.weight(4f))
     }
@@ -136,8 +135,8 @@ fun DeleteHabitButton(removeHabitFunction: (Int) -> Unit, index: Int) {
 
 @Composable
 fun StatusCirclesRow(
-    updateHabitFunction: (Pair<String, List<Boolean>>, Int, Boolean) -> Unit,
-    targetHabit: Pair<String, List<Boolean>>,
+    updateHabitFunction: (HabitRowData, Int, Boolean) -> Unit,
+    targetHabit: HabitRowData,
     isDoneList: List<Boolean>,
     modifier: Modifier = Modifier
 ) {
@@ -153,7 +152,6 @@ fun StatusCirclesRow(
         }
     }
 }
-
 
 @Composable
 fun StatusCircle(isDone: Boolean, updateHabitFunction: (Boolean) -> Unit) {

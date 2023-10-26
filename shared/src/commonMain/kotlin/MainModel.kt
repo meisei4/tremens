@@ -11,28 +11,28 @@ class MainModel {
         return List(5) { i -> current.minus(i, DateTimeUnit.DAY).dayOfMonth.toString() }.reversed()
     }
 
-    fun addNewHabit(habitStatus: MutableState<List<Pair<String, List<Boolean>>>>, newHabit: String) {
-        val updatedHabits = habitStatus.value + (newHabit to List(5) { false })
-        habitStatus.value = updatedHabits
+    fun addNewHabit(habits: MutableState<List<HabitRowData>>, newHabit: HabitRowData) {
+        val updatedHabits = habits.value + newHabit
+        habits.value = updatedHabits
     }
 
     fun updateHabitStatus(
-        habits: MutableState<List<Pair<String, List<Boolean>>>>,
-        currentHabit: Pair<String, List<Boolean>>,
+        habits: MutableState<List<HabitRowData>>,
+        currentHabit: HabitRowData,
         index: Int,
         updatedStatus: Boolean
     ) {
         val updatedHabits = habits.value.map { habit ->
-            if (habit.first == currentHabit.first) {
-                habit.first to habit.second.mapIndexed { idx, status ->
+            if (habit.name == currentHabit.name) {
+                HabitRowData(habit.name, habit.status.mapIndexed { idx, status ->
                     if (idx == index) updatedStatus else status
-                }
+                })
             } else habit
         }
         habits.value = updatedHabits
     }
 
-    fun removeHabit(habits: MutableState<List<Pair<String, List<Boolean>>>>, index: Int) {
+    fun removeHabit(habits: MutableState<List<HabitRowData>>, index: Int) {
         val updatedHabits = habits.value.toMutableList().apply { removeAt(index) }
         habits.value = updatedHabits.toList()
     }
