@@ -2,6 +2,7 @@ rootProject.name = "tremens"
 
 include(":androidApp")
 include(":shared")
+include(":tests")
 
 pluginManagement {
     repositories {
