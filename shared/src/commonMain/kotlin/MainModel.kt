@@ -12,6 +12,10 @@ class MainModel {
     }
 
     fun addNewHabit(habits: MutableState<List<HabitRowData>>, newHabit: HabitRowData) {
+        //TODO: Should it be assumed that the newHabit is already valid when it enters this function?
+        // If someone else looks at this code, how will they know that validation has already occurred?
+        // Shouldn't all the Error logic occur in the Model?
+        // Is it possible to have a state variable in the Model? Bad practice?
         val updatedHabits = habits.value + newHabit
         habits.value = updatedHabits
     }

@@ -41,8 +41,8 @@ fun AppHeader() {
 }
 
 @Composable
-fun AddHabitField(newHabit: String, onValueChange: (String) -> Unit) {
-    TextField(value = newHabit, onValueChange = onValueChange, label = { Text("New Habit") })
+fun AddHabitField(newHabitName: String, onValueChange: (String) -> Unit) {
+    TextField(value = newHabitName, onValueChange = onValueChange, label = { Text("New Habit") })
 }
 
 @Composable
