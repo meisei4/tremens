@@ -1,16 +1,29 @@
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.launch
 
 class MainViewModel(val model: MainModel) : ViewModel() {
-    var habits: MutableState<List<HabitRowData>> = mutableStateOf(emptyList())
+
     var newHabit: MutableState<HabitRowData> = mutableStateOf(HabitRowData("", List(5) { false }))
     var lastFiveDays: List<String> = model.getLastFiveDays()
     var errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
-
-    fun addNewHabit(onUpdate: (List<HabitRowData>) -> Unit) {
+    val habits: MutableState<List<HabitRowData>> = mutableStateOf(listOf())
+    init {
+        loadHabits()
+    }
+    private fun loadHabits() {
+        viewModelScope.launch {
+            habits.value = model.getHabits()
+        }
+    }
+    fun addNewHabit() {
         validateNewHabitInput()
-        model.addNewHabit(habits, newHabit.value)
-        onUpdate(habits.value)
+        if (errorMessages.value.isEmpty()) {
+            viewModelScope.launch {
+                model.addNewHabit(newHabit.value)
+                loadHabits()  // Reload habits after adding
+            }
+        }
     }
 
     private fun validateNewHabitInput() {
@@ -23,6 +36,8 @@ class MainViewModel(val model: MainModel) : ViewModel() {
         //  but also while having already altered the error state var, making it an incomplete update
         val errors = mutableListOf<String>()
 
+        // This is no longer enterable based on the enabled attribute of the AddHabit Button, but
+        // keeping as an example for validation
         if (newHabit.value.name.isBlank()) {
             errors.add("Habit name cannot be empty")
         }
@@ -36,11 +51,11 @@ class MainViewModel(val model: MainModel) : ViewModel() {
         model.updateHabitStatus(habits, targetHabit, index, updatedStatus)
     }
 
-    fun setHabits(updatedHabits: List<HabitRowData>) {
-        habits.value = updatedHabits
-    }
-
     fun removeHabit(index: Int) {
-        model.removeHabit(habits, index)
+        viewModelScope.launch {
+            val habitToRemove = habits.value[index]
+            model.deleteHabit(habitToRemove.name)
+            loadHabits()  // Reload habits after removing
+        }
     }
 }

@@ -23,12 +23,7 @@ fun AppView(viewModel: MainViewModel) {
         AddHabitField(viewModel.newHabit.value.name) { newHabitName ->
             viewModel.newHabit.value = viewModel.newHabit.value.copy(name = newHabitName)
         }
-        AddHabitButton {
-            viewModel.addNewHabit { updatedHabits ->
-                viewModel.setHabits(updatedHabits)
-                viewModel.newHabit.value = HabitRowData("", List(5) { false })
-            }
-        }
+        AddHabitButton(viewModel.newHabit) { viewModel.addNewHabit() }
         DayHeader(viewModel.lastFiveDays)
         HabitList(viewModel)
     }
@@ -46,8 +41,9 @@ fun AddHabitField(newHabitName: String, onValueChange: (String) -> Unit) {
 }
 
 @Composable
-fun AddHabitButton(onClick: () -> Unit) {
-    Button(onClick = onClick) { Text("+") }
+fun AddHabitButton(newHabit: State<HabitRowData>, onClick: () -> Unit) {
+    Button(onClick = onClick,
+    enabled = newHabit.value.name.isNotEmpty()) { Text("+") }
     Spacer(modifier = Modifier.height(16.dp))
 }
 

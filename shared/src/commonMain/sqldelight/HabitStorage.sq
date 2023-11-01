@@ -1,0 +1,4 @@
+CREATE TABLE HabitData (
+    name TEXT PRIMARY KEY NOT NULL,
+    status BLOB NOT NULL
+);

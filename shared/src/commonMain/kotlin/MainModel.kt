@@ -5,19 +5,27 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayAt
 
-class MainModel {
-    fun getLastFiveDays(): List<String> {
-        val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
-        return List(5) { i -> current.minus(i, DateTimeUnit.DAY).dayOfMonth.toString() }.reversed()
+class MainModel(private val habitStorage: HabitStorage) {
+
+    suspend fun getHabits(): List<HabitRowData> {
+        return habitStorage.getHabits()
     }
 
-    fun addNewHabit(habits: MutableState<List<HabitRowData>>, newHabit: HabitRowData) {
+    suspend fun addNewHabit(habit: HabitRowData) {
         //TODO: Should it be assumed that the newHabit is already valid when it enters this function?
         // If someone else looks at this code, how will they know that validation has already occurred?
         // Shouldn't all the Error logic occur in the Model?
         // Is it possible to have a state variable in the Model? Bad practice?
-        val updatedHabits = habits.value + newHabit
-        habits.value = updatedHabits
+        habitStorage.saveHabit(habit)
+    }
+
+    suspend fun deleteHabit(name: String) {
+        habitStorage.deleteHabit(name)
+    }
+
+    fun getLastFiveDays(): List<String> {
+        val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
+        return List(5) { i -> current.minus(i, DateTimeUnit.DAY).dayOfMonth.toString() }.reversed()
     }
 
     fun updateHabitStatus(

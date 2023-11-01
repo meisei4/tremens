@@ -2,6 +2,15 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     id("org.jetbrains.compose")
+    id("app.cash.sqldelight")
+}
+
+sqldelight {
+    databases {
+        create("HabitDatabase") {
+            packageName.set("tremens.database")
+        }
+    }
 }
 
 kotlin {
@@ -21,7 +30,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.0") // replace with the latest version
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.0")
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material)
@@ -31,6 +40,7 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
+                implementation("app.cash.sqldelight:android-driver:2.0.0")
                 api("androidx.activity:activity-compose:1.7.2")
                 api("androidx.appcompat:appcompat:1.6.1")
                 api("androidx.lifecycle:lifecycle-common:2.6.2")
@@ -46,6 +56,9 @@ kotlin {
             iosX64Main.dependsOn(this)
             iosArm64Main.dependsOn(this)
             iosSimulatorArm64Main.dependsOn(this)
+            dependencies {
+                implementation("app.cash.sqldelight:native-driver:2.0.0")
+            }
         }
     }
 }
@@ -57,7 +70,6 @@ android {
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-
 
     defaultConfig {
         minSdk = (findProperty("android.minSdk") as String).toInt()
