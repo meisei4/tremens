@@ -28,29 +28,20 @@ fun AppScreen(viewModel: MainViewModel) {
         HabitList(viewModel)
     }
 
-    AppView(
-        newHabit = viewModel.newHabit,
-        lastFiveDays = viewModel.lastFiveDays,
-        errorMessages = viewModel.errorMessages,
-        habits = viewModel.habits,
-        addHabit = { viewModel.addNewHabit() }
-    )
+//    AppView(
+//        newHabit = viewModel.newHabit,
+//        addHabit = { viewModel.addNewHabit() }
+//    )
 
-    AppView(
-        newHabit = mutableStateOf(HabitRowData.empty),
-        lastFiveDays = viewModel.lastFiveDays,
-        errorMessages = viewModel.errorMessages,
-        habits = viewModel.habits,
-        addHabit = { viewModel.addNewHabit() }
-    )
+//    AppView(
+//        newHabit = mutableStateOf(HabitRowData.empty),
+//        addHabit = { viewModel.addNewHabit() }
+//    )
 }
 
 @Composable
 fun AppView(
     newHabit: MutableState<HabitRowData>,
-    lastFiveDays: List<String>,
-    errorMessages: MutableState<List<String>>,
-    habits: MutableState<List<HabitRowData>>,
     addHabit: () -> Unit
 ) {
     AddHabitButton(newHabit = newHabit, onClick = addHabit)
