@@ -9,5 +9,5 @@ actual fun getPlatformName(): String = "Android"
 ))))
 
 fun HabitDBDriverFactory(): HabitDBDriverFactory {
-
+    return HabitDBDriverFactory()
 }
