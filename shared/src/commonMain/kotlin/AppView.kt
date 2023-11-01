@@ -14,7 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun AppView(viewModel: MainViewModel) {
+fun AppScreen(viewModel: MainViewModel) {
     Column(
         Modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -27,6 +27,33 @@ fun AppView(viewModel: MainViewModel) {
         DayHeader(viewModel.lastFiveDays)
         HabitList(viewModel)
     }
+
+    AppView(
+        newHabit = viewModel.newHabit,
+        lastFiveDays = viewModel.lastFiveDays,
+        errorMessages = viewModel.errorMessages,
+        habits = viewModel.habits,
+        addHabit = { viewModel.addNewHabit() }
+    )
+
+    AppView(
+        newHabit = mutableStateOf(HabitRowData.empty),
+        lastFiveDays = viewModel.lastFiveDays,
+        errorMessages = viewModel.errorMessages,
+        habits = viewModel.habits,
+        addHabit = { viewModel.addNewHabit() }
+    )
+}
+
+@Composable
+fun AppView(
+    newHabit: MutableState<HabitRowData>,
+    lastFiveDays: List<String>,
+    errorMessages: MutableState<List<String>>,
+    habits: MutableState<List<HabitRowData>>,
+    addHabit: () -> Unit
+) {
+    AddHabitButton(newHabit = newHabit, onClick = addHabit)
 }
 
 @Composable
@@ -87,21 +114,29 @@ fun HabitRowHeader(title: String, lastFiveDays: List<String>) {
 fun HabitList(viewModel: MainViewModel) {
     LazyColumn {
         itemsIndexed(viewModel.habits.value) { index, habit ->
-            HabitRow(viewModel, index, habit)
+            HabitRow(
+                habit = habit,
+                deleteFunction = { viewModel.removeHabit(index) },
+                updateHabitStatus = { buttonIndex: Int, status: Boolean -> viewModel.updateHabitStatus(habit, buttonIndex, status) }
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-fun HabitRow(viewModel: MainViewModel, rowIndex: Int, habit: HabitRowData) {
+fun HabitRow(
+    habit: HabitRowData,
+    deleteFunction: () -> Unit,
+    updateHabitStatus: (Int, Boolean) -> Unit
+) {
     //TODO lambdas are so ugly in this function, fix it
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DeleteHabitButton({ i ->  viewModel.removeHabit(i) }, rowIndex)
+        DeleteHabitButton{ deleteFunction() }
 
         val habitName = habit.name
         Text(
@@ -113,13 +148,17 @@ fun HabitRow(viewModel: MainViewModel, rowIndex: Int, habit: HabitRowData) {
 
         val isDoneList = habit.status
 
-        StatusCirclesRow({ a, b, c -> viewModel.updateHabitStatus(a,b,c) }, habit, isDoneList, modifier = Modifier.weight(4f))
+        StatusCirclesRow(
+            updateHabitFunction = { buttonIndex: Int, status: Boolean -> updateHabitStatus(buttonIndex, status) },
+            isDoneList = isDoneList,
+            modifier = Modifier.weight(4f)
+        )
     }
 }
 
 @Composable
-fun DeleteHabitButton(removeHabitFunction: (Int) -> Unit, index: Int) {
-    IconButton(onClick = { removeHabitFunction(index) }) {
+fun DeleteHabitButton(removeHabitFunction: () -> Unit) {
+    IconButton(onClick = { removeHabitFunction() }) {
         Icon(
             imageVector = Icons.Default.Delete,
             contentDescription = null,
@@ -131,8 +170,7 @@ fun DeleteHabitButton(removeHabitFunction: (Int) -> Unit, index: Int) {
 
 @Composable
 fun StatusCirclesRow(
-    updateHabitFunction: (HabitRowData, Int, Boolean) -> Unit,
-    targetHabit: HabitRowData,
+    updateHabitFunction: (Int, Boolean) -> Unit,
     isDoneList: List<Boolean>,
     modifier: Modifier = Modifier
 ) {
@@ -143,7 +181,7 @@ fun StatusCirclesRow(
     ) {
         isDoneList.forEachIndexed { index, isDone ->
             StatusCircle(isDone) { newStatus ->
-                updateHabitFunction(targetHabit, index, newStatus)
+                updateHabitFunction(index, newStatus)
             }
         }
     }

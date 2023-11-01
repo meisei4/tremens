@@ -1,13 +1,9 @@
 import androidx.compose.runtime.Composable
-import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import tremens.database.HabitDatabase
 
 actual fun getPlatformName(): String = "Android"
 
-@Composable fun MainView() = AppView(viewModel = MainViewModel(model = MainModel(habitStorage = MainHabitStorage(
-    database = HabitDatabase(HabitDBDriverFactory().createDriver())
+@Composable fun MainView() = AppScreen(viewModel = MainViewModel(model = MainModel(habitStorage = MainHabitStorage(
+    database = HabitDatabase(HabitDBDriverFactory(LocalContext.current).createDriver())
 ))))
-
-fun HabitDBDriverFactory(): HabitDBDriverFactory {
-    return HabitDBDriverFactory()
-}
