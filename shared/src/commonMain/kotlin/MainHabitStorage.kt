@@ -1,0 +1,4 @@
+class MainHabitStorage(): HabitStorage() {
+
+
+}
