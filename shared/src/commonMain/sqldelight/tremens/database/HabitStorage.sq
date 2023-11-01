@@ -1,4 +1,14 @@
-CREATE TABLE HabitData (
+CREATE TABLE HabitStorage (
     name TEXT PRIMARY KEY NOT NULL,
-    status BLOB NOT NULL
+    status TEXT NOT NULL
 );
+
+insertHabit:
+INSERT INTO HabitStorage(name, status)
+VALUES (?, ?);
+
+selectHabits:
+SELECT * FROM HabitStorage;
+
+deleteHabit:
+DELETE FROM HabitStorage WHERE name = ?;

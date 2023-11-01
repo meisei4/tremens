@@ -3,6 +3,7 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.compose")
     id("app.cash.sqldelight")
+    kotlin("plugin.serialization") version "1.9.0"
 }
 
 sqldelight {
@@ -30,6 +31,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.0")
                 implementation(compose.runtime)
                 implementation(compose.foundation)
