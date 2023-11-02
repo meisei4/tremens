@@ -3,6 +3,7 @@ import androidx.compose.ui.platform.LocalContext
 import datasources.HabitDBDriverFactory
 import datasources.HabitLocalDataSource
 import datasources.HabitRepository
+import mvvm.MainViewModel
 import tremens.database.HabitDatabase
 
 actual fun getPlatformName(): String = "Android"

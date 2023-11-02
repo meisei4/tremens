@@ -2,7 +2,7 @@ package tremens.tests
 
 import datasources.HabitRowData
 import MainModel
-import MainViewModel
+import mvvm.MainViewModel
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import datasources.HabitRepository

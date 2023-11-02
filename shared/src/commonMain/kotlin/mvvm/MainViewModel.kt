@@ -1,3 +1,7 @@
+package mvvm
+
+import MainModel
+import ViewModel
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import datasources.HabitRowData

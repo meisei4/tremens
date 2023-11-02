@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import datasources.HabitRowData
+import mvvm.MainViewModel
 
 @Composable
 fun AppScreen(viewModel: MainViewModel) {
@@ -29,12 +30,12 @@ fun AppScreen(viewModel: MainViewModel) {
         HabitList(viewModel)
     }
 
-//    AppView(
+//    mvvm.AppView(
 //        newHabit = viewModel.newHabit,
 //        addHabit = { viewModel.addNewHabit() }
 //    )
 
-//    AppView(
+//    mvvm.AppView(
 //        newHabit = mutableStateOf(datasources.HabitRowData.empty),
 //        addHabit = { viewModel.addNewHabit() }
 //    )
