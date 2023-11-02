@@ -13,7 +13,7 @@ class HabitLocalDataSource(database: HabitDatabase): HabitDataSource {
     private val habitQueries: HabitStorageQueries = database.habitStorageQueries
 
     override suspend fun addHabit(habit: HabitRowData) = withContext(Dispatchers.Unconfined) {
-        val statusJson = Json.encodeToString(habit.status)
+        val statusJson = Json.encodeToString(habit.lastFiveDaysToIsDoneMap)
         habitQueries.insertHabit(habit.name, statusJson)
     }
 
@@ -21,6 +21,11 @@ class HabitLocalDataSource(database: HabitDatabase): HabitDataSource {
         return@withContext habitQueries.selectHabits().executeAsList().map {
             HabitRowData(it.name, Json.decodeFromString(it.status))
         }
+    }
+
+    override fun updateStatus(habitName: String, updatedStatus: List<Boolean>) {
+        val statusJson = Json.encodeToString(updatedStatus)
+        habitQueries.updateStatus(statusJson, habitName)
     }
 
     override suspend fun removeHabit(name: String) = withContext(Dispatchers.Unconfined) {

@@ -10,6 +10,10 @@ class HabitRepository(private val habitDataSource: HabitDataSource) {
         return habitDataSource.getAllHabits()
     }
 
+    fun updateStatus(habitName: String, updatedStatus: List<Boolean>) {
+        habitDataSource.updateStatus(habitName, updatedStatus)
+    }
+
     suspend fun removeHabit(name: String) {
         habitDataSource.removeHabit(name)
     }

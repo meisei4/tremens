@@ -5,5 +5,8 @@ package datasources
 interface HabitDataSource {
     suspend fun addHabit(habit: HabitRowData)
     suspend fun getAllHabits(): List<HabitRowData>
+
+    // TODO figure out why this should or should not be suspended
+    fun updateStatus(habitName: String, updatedStatus: List<Boolean>)
     suspend fun removeHabit(name: String)
 }

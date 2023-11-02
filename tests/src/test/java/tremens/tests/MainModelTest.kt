@@ -6,7 +6,6 @@ import MainViewModel
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import datasources.HabitRepository
-import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.*
 import org.junit.Before
@@ -69,7 +68,7 @@ class MainModelTest {
         habits.value = listOf(initialHabit)
         mainModel.updateHabitStatus(habits, initialHabit, 0, true)
 
-        val updatedStatus = habits.value.first().status.first()
+        val updatedStatus = habits.value.first().lastFiveDaysToIsDoneMap.first()
         assertTrue(updatedStatus)
     }
 

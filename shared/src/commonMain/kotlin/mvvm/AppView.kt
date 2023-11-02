@@ -109,7 +109,7 @@ fun HabitList(viewModel: MainViewModel) {
             HabitRow(
                 habit = habit,
                 deleteFunction = { viewModel.removeHabit(index) },
-                updateHabitStatus = { buttonIndex: Int, status: Boolean -> viewModel.updateHabitStatus(habit, buttonIndex, status) }
+                updateHabitStatus = { dayColumnIndex: Int, status: Boolean -> viewModel.updateHabitStatus(habit, dayColumnIndex, status) }
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -138,7 +138,7 @@ fun HabitRow(
             textAlign = TextAlign.Start
         )
 
-        val isDoneList = habit.status
+        val isDoneList = habit.lastFiveDaysToIsDoneMap
 
         StatusCirclesRow(
             updateHabitFunction = { buttonIndex: Int, status: Boolean -> updateHabitStatus(buttonIndex, status) },

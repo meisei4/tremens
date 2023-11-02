@@ -48,8 +48,8 @@ class MainViewModel(val model: MainModel) : ViewModel() {
         errorMessages.value = errors
     }
 
-    fun updateHabitStatus(targetHabit: HabitRowData, index: Int, updatedStatus: Boolean) {
-        model.updateHabitStatus(habits, targetHabit, index, updatedStatus)
+    fun updateHabitStatus(targetHabit: HabitRowData, dayColumnIndex: Int, updatedStatus: Boolean) {
+        model.updateHabitStatus(habits, targetHabit, dayColumnIndex, updatedStatus)
     }
 
     fun removeHabit(index: Int) {

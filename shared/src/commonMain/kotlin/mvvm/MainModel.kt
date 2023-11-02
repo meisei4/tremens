@@ -34,16 +34,21 @@ class MainModel(private val habitRepository: HabitRepository) {
     fun updateHabitStatus(
         habits: MutableState<List<HabitRowData>>,
         currentHabit: HabitRowData,
-        index: Int,
-        updatedStatus: Boolean
+        dayColumnIndex: Int,
+        updatedStatusValue: Boolean
     ) {
         val updatedHabits = habits.value.map { habit ->
             if (habit.name == currentHabit.name) {
-                HabitRowData(habit.name, habit.status.mapIndexed { idx, status ->
-                    if (idx == index) updatedStatus else status
-                })
+                val updatedStatus = habit.lastFiveDaysToIsDoneMap.mapIndexed { i, isDoneStatus ->
+                    if (i == dayColumnIndex) updatedStatusValue else isDoneStatus
+                }
+                habitRepository.updateStatus(habit.name, updatedStatus) // Persist the updated status to the database
+                HabitRowData(habit.name, updatedStatus)
             } else habit
         }
+        //TODO is it ok to do this here? or should the Database and mutable state variable
+        // be connected more atomically?
+
         habits.value = updatedHabits
     }
 

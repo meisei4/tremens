@@ -10,5 +10,8 @@ VALUES (?, ?);
 selectHabits:
 SELECT * FROM HabitStorage;
 
+updateStatus:
+UPDATE HabitStorage SET status = ? WHERE name = ?;
+
 deleteHabit:
 DELETE FROM HabitStorage WHERE name = ?;
