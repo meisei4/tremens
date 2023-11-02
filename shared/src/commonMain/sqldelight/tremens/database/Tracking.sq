@@ -1,0 +1,25 @@
+CREATE TABLE Tracking (
+    TrackingID INTEGER PRIMARY KEY,
+    HabitID INTEGER NOT NULL REFERENCES Habit(HabitID),
+    Date INTEGER NOT NULL
+);
+
+insertTracking:
+INSERT INTO Tracking(HabitID, Date) VALUES (?, ?);
+
+selectTrackingForHabitOnDates:
+SELECT Date
+FROM Tracking
+WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?)
+AND Date IN (?, ?, ?, ?, ?);
+
+deleteTrackingForDate:
+DELETE FROM Tracking
+WHERE HabitID = ?
+AND Date = ?;
+
+
+selectTrackingForHabit:
+SELECT Date FROM Tracking WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?);
+deleteTrackingForHabit:
+DELETE FROM Tracking WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?);

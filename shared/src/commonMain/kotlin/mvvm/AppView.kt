@@ -123,7 +123,6 @@ fun HabitRow(
     deleteFunction: () -> Unit,
     updateHabitStatus: (Int, Boolean) -> Unit
 ) {
-    //TODO lambdas are so ugly in this function, fix it
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -139,10 +138,10 @@ fun HabitRow(
             textAlign = TextAlign.Start
         )
 
-        val isDoneList = habit.lastFiveDaysToIsDoneMap
+        val isDoneList = habit.lastFiveDayStatuses
 
         StatusCirclesRow(
-            updateHabitFunction = { buttonIndex: Int, status: Boolean -> updateHabitStatus(buttonIndex, status) },
+            updateHabitFunction = { statusCircleIndex: Int, status: Boolean -> updateHabitStatus(statusCircleIndex, status) },
             isDoneList = isDoneList,
             modifier = Modifier.weight(4f)
         )

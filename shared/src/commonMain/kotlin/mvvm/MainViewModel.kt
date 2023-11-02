@@ -16,6 +16,7 @@ class MainViewModel(val model: MainModel) : ViewModel() {
     init {
         loadHabits()
     }
+    //TODO NO IDEA WHATS HAPPENING HERE
     private fun loadHabits() {
         viewModelScope.launch {
             habits.value = model.getAllHabits()

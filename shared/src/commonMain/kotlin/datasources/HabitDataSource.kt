@@ -7,6 +7,6 @@ interface HabitDataSource {
     suspend fun getAllHabits(): List<HabitRowData>
 
     // TODO figure out why this should or should not be suspended
-    fun updateStatus(habitName: String, updatedStatus: List<Boolean>)
+    fun updateTracking(habitName: String, updatedTracking: List<Boolean>)
     suspend fun removeHabit(name: String)
 }

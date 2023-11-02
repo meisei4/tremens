@@ -26,28 +26,23 @@ class MainModel(private val habitRepository: HabitRepository) {
         habitRepository.removeHabit(name)
     }
 
-    fun getLastFiveDays(): List<String> {
-        val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
-        return List(5) { i -> current.minus(i, DateTimeUnit.DAY).dayOfMonth.toString() }.reversed()
-    }
-
     fun updateHabitStatus(
         habits: MutableState<List<HabitRowData>>,
         currentHabit: HabitRowData,
         dayColumnIndex: Int,
-        updatedStatusValue: Boolean
+        updatedTrackingValue: Boolean
     ) {
         val updatedHabits = habits.value.map { habit ->
             if (habit.name == currentHabit.name) {
-                val updatedStatus = habit.lastFiveDaysToIsDoneMap.mapIndexed { i, isDoneStatus ->
-                    if (i == dayColumnIndex) updatedStatusValue else isDoneStatus
+                val updatedTracking = habit.lastFiveDayStatuses.mapIndexed { i, isDoneStatus ->
+                    if (i == dayColumnIndex) updatedTrackingValue else isDoneStatus
                 }
-                habitRepository.updateStatus(habit.name, updatedStatus) // Persist the updated status to the database
-                HabitRowData(habit.name, updatedStatus)
+                habitRepository.updateTracking(habit.name, updatedTracking) // Persist the updated status to the database
+                HabitRowData(habit.name, updatedTracking)
             } else habit
         }
         //TODO is it ok to do this here? or should the Database and mutable state variable
-        // be connected more atomically?
+        // be connected more atomically? IS THE MUTABLE STATE VARIABLE EVEN NEEDED ANYMORE?
 
         habits.value = updatedHabits
     }
@@ -56,4 +51,12 @@ class MainModel(private val habitRepository: HabitRepository) {
         val updatedHabits = habits.value.toMutableList().apply { removeAt(index) }
         habits.value = updatedHabits.toList()
     }
+
+    //TODO figure out where to put these auxiliary/util methods
+
+    fun getLastFiveDays(): List<String> {
+        val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
+        return List(5) { i -> current.minus(i, DateTimeUnit.DAY).dayOfMonth.toString() }.reversed()
+    }
 }
+

@@ -68,7 +68,7 @@ class MainModelTest {
         habits.value = listOf(initialHabit)
         mainModel.updateHabitStatus(habits, initialHabit, 0, true)
 
-        val updatedStatus = habits.value.first().lastFiveDaysToIsDoneMap.first()
+        val updatedStatus = habits.value.first().lastFiveDayStatuses.first()
         assertTrue(updatedStatus)
     }
 
