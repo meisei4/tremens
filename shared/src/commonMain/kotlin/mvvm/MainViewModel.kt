@@ -1,5 +1,6 @@
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import datasources.HabitRowData
 import kotlinx.coroutines.launch
 
 class MainViewModel(val model: MainModel) : ViewModel() {
@@ -13,14 +14,14 @@ class MainViewModel(val model: MainModel) : ViewModel() {
     }
     private fun loadHabits() {
         viewModelScope.launch {
-            habits.value = model.getHabits()
+            habits.value = model.getAllHabits()
         }
     }
-    fun addNewHabit() {
+    fun addHabit() {
         validateNewHabitInput()
         if (errorMessages.value.isEmpty()) {
             viewModelScope.launch {
-                model.addNewHabit(newHabit.value)
+                model.addHabit(newHabit.value)
                 loadHabits()  // Reload habits after adding
             }
         }
@@ -54,7 +55,7 @@ class MainViewModel(val model: MainModel) : ViewModel() {
     fun removeHabit(index: Int) {
         viewModelScope.launch {
             val habitToRemove = habits.value[index]
-            model.deleteHabit(habitToRemove.name)
+            model.removeHabit(habitToRemove.name)
             loadHabits()  // Reload habits after removing
         }
     }

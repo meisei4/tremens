@@ -1,7 +1,8 @@
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import datasources.HabitDBDriverFactory
+import datasources.HabitLocalDataSource
+import datasources.HabitRepository
 import tremens.database.HabitDatabase
 
 actual fun getPlatformName(): String = "Android"
@@ -9,8 +10,10 @@ actual fun getPlatformName(): String = "Android"
 @Composable fun MainView() = AppScreen(
     viewModel = MainViewModel(
         model = MainModel(
-            habitStorage = MainHabitStorage(
-                database = createTestDatabase(HabitDBDriverFactory(LocalContext.current))
+            habitRepository = HabitRepository(
+                habitDataSource = HabitLocalDataSource(
+                    database = createTestDatabase(HabitDBDriverFactory(LocalContext.current))
+                )
             )
         )
     )

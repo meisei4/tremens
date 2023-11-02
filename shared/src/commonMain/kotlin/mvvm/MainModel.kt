@@ -1,26 +1,29 @@
 import androidx.compose.runtime.MutableState
+import datasources.HabitRepository
+import datasources.HabitRowData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayAt
 
-class MainModel(private val habitStorage: HabitStorage) {
 
-    suspend fun getHabits(): List<HabitRowData> {
-        return habitStorage.getHabits()
+class MainModel(private val habitRepository: HabitRepository) {
+
+    suspend fun getAllHabits(): List<HabitRowData> {
+        return habitRepository.getAllHabits()
     }
 
-    suspend fun addNewHabit(habit: HabitRowData) {
+    suspend fun addHabit(habit: HabitRowData) {
         //TODO: Should it be assumed that the newHabit is already valid when it enters this function?
         // If someone else looks at this code, how will they know that validation has already occurred?
         // Shouldn't all the Error logic occur in the Model?
         // Is it possible to have a state variable in the Model? Bad practice?
-        habitStorage.saveHabit(habit)
+        habitRepository.addHabit(habit)
     }
 
-    suspend fun deleteHabit(name: String) {
-        habitStorage.deleteHabit(name)
+    suspend fun removeHabit(name: String) {
+        habitRepository.removeHabit(name)
     }
 
     fun getLastFiveDays(): List<String> {

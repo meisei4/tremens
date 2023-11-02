@@ -1,24 +1,34 @@
 package tremens.tests
 
-import HabitRowData
+import datasources.HabitRowData
 import MainModel
 import MainViewModel
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import datasources.HabitRepository
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
 const val EMPTY_STRING = ""
+
 class MainModelTest {
 
     private lateinit var mainModel: MainModel
     private lateinit var mainViewModel: MainViewModel
     private lateinit var habits: MutableState<List<HabitRowData>>
+    private lateinit var dataRepository: HabitRepository
 
     @Before
     fun setUp() {
-        mainModel = MainModel()
+        dataRepository = mockk(relaxed = true)  // This creates a mock object for HabitRepository.
+
+        // TODO: later implement mocking and the suspend function calls
+        //every { dataRepository.someMethod() } returns someValue  // Replace with actual methods and return values as needed.
+
+        mainModel = MainModel(dataRepository)
         mainViewModel = MainViewModel(mainModel)
         habits = mutableStateOf(emptyList())
     }
@@ -32,7 +42,7 @@ class MainModelTest {
     @Test
     fun testAddNewHabit_InputNOTEMPTY_HabitListUPDATED_ErrorMessagesEMPTY() {
         val newHabit = HabitRowData("Read", List(5) { false })
-        mainModel.addNewHabit(habits, newHabit)
+        //mainModel.addHabit(habits, newHabit)
 
         assertEquals(1, habits.value.size)
         assertEquals(newHabit, habits.value.first())
@@ -47,7 +57,7 @@ class MainModelTest {
         // No need to pass in any function to the addNewHabit because we are only
         // testing the call to the private validateNewHabitInput function (have not
         // decided to make validateNewHabitInput public yet.)
-        mainViewModel.addNewHabit { }
+        //mainViewModel.addHabit { }
 
         assertEquals(0, habits.value.size)
         assertTrue(mainViewModel.errorMessages.value.contains("Habit name cannot be empty"))

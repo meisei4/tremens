@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import datasources.HabitRowData
 
 @Composable
 fun AppScreen(viewModel: MainViewModel) {
@@ -23,7 +24,7 @@ fun AppScreen(viewModel: MainViewModel) {
         AddHabitField(viewModel.newHabit.value.name) { newHabitName ->
             viewModel.newHabit.value = viewModel.newHabit.value.copy(name = newHabitName)
         }
-        AddHabitButton(viewModel.newHabit) { viewModel.addNewHabit() }
+        AddHabitButton(viewModel.newHabit) { viewModel.addHabit() }
         DayHeader(viewModel.lastFiveDays)
         HabitList(viewModel)
     }
@@ -34,7 +35,7 @@ fun AppScreen(viewModel: MainViewModel) {
 //    )
 
 //    AppView(
-//        newHabit = mutableStateOf(HabitRowData.empty),
+//        newHabit = mutableStateOf(datasources.HabitRowData.empty),
 //        addHabit = { viewModel.addNewHabit() }
 //    )
 }
