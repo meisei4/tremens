@@ -1,12 +1,16 @@
 CREATE TABLE Habit (
     HabitID INTEGER PRIMARY KEY,
-    Name TEXT NOT NULL --should this also just always be unique?
+    Name TEXT NOT NULL UNIQUE
 );
+
 selectAllHabitNames:
 SELECT Name FROM Habit;
+
 getHabitId:
 SELECT HabitID FROM Habit WHERE Name = ?;
+
 insertHabit:
 INSERT INTO Habit(Name) VALUES (?);
+
 deleteHabit:
 DELETE FROM Habit WHERE Name = ?;
