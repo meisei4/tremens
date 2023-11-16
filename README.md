@@ -10,13 +10,13 @@ As a practical study in Kotlin (And MVVM design pattern) I am trying to make an 
   shared
   └─ src
   └─ commonMain
-  └─ kotlin
-  ├─ datasources
-  │  └─ HabitLocalDataSource.kt
-  └─ mvvm
-     ├─ AppView.kt
-     ├─ MainModel
-     └─ MainViewModel
+     └─ kotlin
+     ├─ datasources
+     │  └─ HabitLocalDataSource.kt
+     └─ mvvm
+        ├─ AppView.kt
+        ├─ MainModel
+        └─ MainViewModel
 ```
 
 ## Features
