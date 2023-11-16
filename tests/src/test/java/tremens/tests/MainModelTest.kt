@@ -4,32 +4,71 @@ import datasources.HabitRowData
 import MainModel
 import mvvm.MainViewModel
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import datasources.HabitRepository
+import app.cash.sqldelight.Query
+import datasources.HabitLocalDataSource
+import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import tremens.database.HabitDatabase
+import tremens.database.HabitQueries
+import tremens.database.TrackingQueries
 
 const val EMPTY_STRING = ""
 
+//TODO This model test does not work anymore after database was refactored.
+// all tests are via emulator.
+
+@ExperimentalCoroutinesApi
 class MainModelTest {
 
     private lateinit var mainModel: MainModel
-    private lateinit var mainViewModel: MainViewModel
     private lateinit var habits: MutableState<List<HabitRowData>>
-    private lateinit var dataRepository: HabitRepository
+    private lateinit var mainViewModel: MainViewModel
+    private lateinit var habitDatabase: HabitDatabase
+    private lateinit var habitQueries: HabitQueries
+    private lateinit var trackingQueries: TrackingQueries
+    private lateinit var habitLocalDataSource: HabitLocalDataSource
 
     @Before
     fun setUp() {
-        dataRepository = mockk(relaxed = true)  // This creates a mock object for HabitRepository.
+        // Mocks
+        habitQueries = mockk(relaxed = true)
+        trackingQueries = mockk(relaxed = true)
+        habitDatabase = mockk {
+            every { habitQueries } returns this@MainModelTest.habitQueries
+            every { trackingQueries } returns this@MainModelTest.trackingQueries
+        }
+        habitLocalDataSource = HabitLocalDataSource(habitDatabase)
 
-        // TODO: later implement mocking and the suspend function calls
-        //every { dataRepository.someMethod() } returns someValue  // Replace with actual methods and return values as needed.
-
-        mainModel = MainModel(dataRepository)
+        // MainModel and MainViewModel setup
+        mainModel = MainModel(habitLocalDataSource)
         mainViewModel = MainViewModel(mainModel)
-        habits = mutableStateOf(emptyList())
+    }
+
+    @Test
+    fun `addHabit inserts habit into database`() = runBlockingTest {
+        // Arrange
+        val habit = HabitRowData("Drink Water", listOf(true, false, true, true, false))
+        val mockQuery = mockk<Query<Long>> {
+            every { executeAsOne() } returns 1L
+        }
+        coEvery { habitQueries.insertHabit(any()) } just Runs
+        coEvery { habitQueries.getHabitId(any()) } returns mockQuery
+
+        // Act
+        habitLocalDataSource.addHabit(habit)
+
+        // Assert
+        coVerify(exactly = 1) { habitQueries.insertHabit("Drink Water") }
+        coVerify(exactly = 1) { mockQuery.executeAsOne() }
     }
 
     @Test

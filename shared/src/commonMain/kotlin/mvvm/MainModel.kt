@@ -1,5 +1,5 @@
 import androidx.compose.runtime.MutableState
-import datasources.HabitRepository
+import datasources.HabitDataSource
 import datasources.HabitRowData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -8,22 +8,22 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.todayAt
 
 
-class MainModel(private val habitRepository: HabitRepository) {
+class MainModel(private val habitDataSource: HabitDataSource) {
 
     suspend fun getAllHabits(): List<HabitRowData> {
-        return habitRepository.getAllHabits()
+        return habitDataSource.getAllHabits()
     }
 
     suspend fun addHabit(habit: HabitRowData) {
-        //TODO: Should it be assumed that the newHabit is already valid when it enters this function?
+        // TODO: Should it be assumed that the newHabit is already valid when it enters this function?
         // If someone else looks at this code, how will they know that validation has already occurred?
         // Shouldn't all the Error logic occur in the Model?
         // Is it possible to have a state variable in the Model? Bad practice?
-        habitRepository.addHabit(habit)
+        habitDataSource.addHabit(habit)
     }
 
     suspend fun removeHabit(name: String) {
-        habitRepository.removeHabit(name)
+        habitDataSource.removeHabit(name)
     }
 
     fun updateHabitStatus(
@@ -37,12 +37,13 @@ class MainModel(private val habitRepository: HabitRepository) {
                 val updatedTracking = habit.lastFiveDayStatuses.mapIndexed { i, isDoneStatus ->
                     if (i == dayColumnIndex) updatedTrackingValue else isDoneStatus
                 }
-                habitRepository.updateTracking(habit.name, updatedTracking) // Persist the updated status to the database
+                habitDataSource.updateTracking(habit.name, updatedTracking) // Persist the updated status to the database
                 HabitRowData(habit.name, updatedTracking)
             } else habit
         }
-        //TODO is it ok to do this here? or should the Database and mutable state variable
+        // TODO is it ok to do this here? or should the Database and mutable state variable
         // be connected more atomically? IS THE MUTABLE STATE VARIABLE EVEN NEEDED ANYMORE?
+        // need to study concept of Flow?
 
         habits.value = updatedHabits
     }
@@ -52,7 +53,7 @@ class MainModel(private val habitRepository: HabitRepository) {
         habits.value = updatedHabits.toList()
     }
 
-    //TODO figure out where to put these auxiliary/util methods
+    // TODO figure out where to put these auxiliary/util methods
 
     fun getLastFiveDays(): List<String> {
         val current = Clock.System.todayAt(TimeZone.currentSystemDefault())

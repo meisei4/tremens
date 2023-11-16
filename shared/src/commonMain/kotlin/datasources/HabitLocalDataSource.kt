@@ -8,8 +8,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayAt
 import tremens.database.HabitDatabase
 import tremens.database.HabitQueries
@@ -25,10 +23,10 @@ class HabitLocalDataSource(database: HabitDatabase): HabitDataSource {
 
     override suspend fun addHabit(habit: HabitRowData) = withContext(Dispatchers.Unconfined) {
         habitQueries.insertHabit(habit.name)
-        val habitId = habitQueries.getHabitId(habit.name).executeAsOne() //unwraps the Query<> part
+        val habitId = habitQueries.getHabitId(habit.name).executeAsOne() //unwraps the Query<> part?
         val lastFiveDates = getLastFiveDates()
         val dateToStatusMap = lastFiveDates.zip(habit.lastFiveDayStatuses).toMap()
-        val datesToInsert = dateToStatusMap.filter { it.value == true }.keys
+        val datesToInsert = dateToStatusMap.filter { it.value == true }.keys //== for explicit clarity that "it" is a map with Boolean values
         datesToInsert.forEach { dateString ->
             val localDate = LocalDate.parse(dateString) // Use LocalDate.parse here
             val instant = localDate.atStartOfDayIn(TIME_ZONE) // Convert LocalDate to Instant at the start of the day
@@ -45,7 +43,7 @@ class HabitLocalDataSource(database: HabitDatabase): HabitDataSource {
         val lastFiveDatesTimestamps = lastFiveDatesInstants.map { it.epochSeconds }
         val habitNames = habitQueries.selectAllHabitNames().executeAsList()
 
-        //this is kind of crazy but i think its so far the clearest way without doing the antipattern
+        // this is kind of crazy but i think its so far the clearest way without doing the antipattern
         val habitRowDataList = habitNames.map { habitName ->
             val trackedDatesTimestamps = trackingQueries.selectTrackingForHabitOnDates(
                 habitName,
@@ -57,7 +55,7 @@ class HabitLocalDataSource(database: HabitDatabase): HabitDataSource {
             ).executeAsList().toSet()
 
             // Sneaky one liner that takes care of the true/false state of each lastfivedates,
-            //if the "it" (the unix epoch Long) is found in the returned query then
+            // if the "it" (the unix epoch Long) is found in the returned query then
             // the date gets mapped to true false if otherwise
             val lastFiveDayStatuses = lastFiveDatesTimestamps.map { it in trackedDatesTimestamps }
             HabitRowData(habitName, lastFiveDayStatuses)
@@ -66,7 +64,7 @@ class HabitLocalDataSource(database: HabitDatabase): HabitDataSource {
         return@withContext habitRowDataList
     }
 
-    //TODO figure out this suspend issue and Coroutines and context
+    // TODO figure out this suspend issue and Coroutines and context
     override fun updateTracking(habitName: String, updatedTracking: List<Boolean>) {//} = withContext(Dispatchers.Unconfined) {
         val habitId = habitQueries.getHabitId(habitName).executeAsOne()
         val lastFiveDates = getLastFiveDates()
@@ -77,7 +75,7 @@ class HabitLocalDataSource(database: HabitDatabase): HabitDataSource {
 
         dateToStatusMap.forEach { (date, status) ->
             if (status) {
-                // If status is true, insert or ignore (if it already exists)
+                // If status is true, insert or ignore (if it already exists: check the Tracking insert query)
                 trackingQueries.insertTracking(habitId, date)
             } else {
                 // If status is false, delete (if it exists)
@@ -87,11 +85,11 @@ class HabitLocalDataSource(database: HabitDatabase): HabitDataSource {
     }
 
     override suspend fun removeHabit(name: String) = withContext(Dispatchers.Unconfined) {
-        habitQueries.deleteHabit(name)
         trackingQueries.deleteTrackingForHabit(name)
+        habitQueries.deleteHabit(name)
     }
 
-    //TODO figure out where to put these auxiliary/util methods
+    // TODO figure out where to put these auxiliary/util methods
     private fun getLastFiveDates(): List<String> {
         val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
         return List(5) { i ->

@@ -13,10 +13,11 @@ class MainViewModel(val model: MainModel) : ViewModel() {
     var lastFiveDays: List<String> = model.getLastFiveDays()
     var errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
     val habits: MutableState<List<HabitRowData>> = mutableStateOf(listOf())
+
     init {
         loadHabits()
     }
-    //TODO NO IDEA WHATS HAPPENING HERE
+
     private fun loadHabits() {
         viewModelScope.launch {
             habits.value = model.getAllHabits()
@@ -27,7 +28,7 @@ class MainViewModel(val model: MainModel) : ViewModel() {
         if (errorMessages.value.isEmpty()) {
             viewModelScope.launch {
                 model.addHabit(newHabit.value)
-                loadHabits()  // Reload habits after adding
+                loadHabits()
             }
         }
     }
@@ -39,16 +40,14 @@ class MainViewModel(val model: MainModel) : ViewModel() {
         // variable. i.e. we want to return ALL errors in the order that they occur only at the end
         // of the function, rather than adding to the state variable during each validation check.
         // This is because during validation, an error could occur causing the function to be exited
-        //  but also while having already altered the error state var, making it an incomplete update
+        // but also while having already altered the error state var, making it an incomplete update
         val errors = mutableListOf<String>()
 
         // This is no longer enterable based on the enabled attribute of the AddHabit Button, but
-        // keeping as an example for validation
+        // keeping as an example for future validation
         if (newHabit.value.name.isBlank()) {
             errors.add("Habit name cannot be empty")
         }
-
-        // at somepoint add a validation to check whether or not the newHabit exists in the db yet
 
         errorMessages.value = errors
     }
@@ -61,7 +60,7 @@ class MainViewModel(val model: MainModel) : ViewModel() {
         viewModelScope.launch {
             val habitToRemove = habits.value[index]
             model.removeHabit(habitToRemove.name)
-            loadHabits()  // Reload habits after removing
+            loadHabits()
         }
     }
 }

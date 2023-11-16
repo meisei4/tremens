@@ -29,18 +29,9 @@ fun AppScreen(viewModel: MainViewModel) {
         DayHeader(viewModel.lastFiveDays)
         HabitList(viewModel)
     }
-
-//    mvvm.AppView(
-//        newHabit = viewModel.newHabit,
-//        addHabit = { viewModel.addNewHabit() }
-//    )
-
-//    mvvm.AppView(
-//        newHabit = mutableStateOf(datasources.HabitRowData.empty),
-//        addHabit = { viewModel.addNewHabit() }
-//    )
 }
 
+//TODO Louis idea here for View<Screen thing, I forgot what it was
 @Composable
 fun AppView(
     newHabit: MutableState<HabitRowData>,
