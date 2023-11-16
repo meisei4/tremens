@@ -11,12 +11,12 @@ As a practical study in Kotlin (And MVVM design pattern) I am trying to make an 
   └─ src
   └─ commonMain
      └─ kotlin
-     ├─ datasources
-     │  └─ HabitLocalDataSource.kt
-     └─ mvvm
-        ├─ AppView.kt
-        ├─ MainModel
-        └─ MainViewModel
+        ├─ datasources
+        │  └─ HabitLocalDataSource.kt
+        └─ mvvm
+           ├─ AppView.kt
+           ├─ MainModel
+           └─ MainViewModel
 ```
 
 ## Features
