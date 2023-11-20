@@ -1,45 +1,40 @@
 import androidx.compose.runtime.MutableState
-import datasources.HabitDataSource
+import datasources.HabitDataDao
 import datasources.HabitRowData
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.todayAt
 
 
-class MainModel(private val habitDataSource: HabitDataSource) {
+class MainModel(private val habitDataDao: HabitDataDao) {
 
     suspend fun getAllHabits(): List<HabitRowData> {
-        return habitDataSource.getAllHabits()
+        return habitDataDao.getAllHabitRows()
     }
 
-    suspend fun addHabit(habit: HabitRowData) {
+    suspend fun addHabit(habitRow: HabitRowData) {
         // TODO: Should it be assumed that the newHabit is already valid when it enters this function?
         // If someone else looks at this code, how will they know that validation has already occurred?
         // Shouldn't all the Error logic occur in the Model?
         // Is it possible to have a state variable in the Model? Bad practice?
-        habitDataSource.addHabit(habit)
+        habitDataDao.addHabit(habitRow)
     }
 
-    suspend fun removeHabit(name: String) {
-        habitDataSource.removeHabit(name)
+    suspend fun removeHabit(habitName: String) {
+        habitDataDao.removeHabit(habitName)
     }
 
     fun updateHabitStatus(
         habits: MutableState<List<HabitRowData>>,
-        currentHabit: HabitRowData,
+        currentHabitRow: HabitRowData,
         dayColumnIndex: Int,
         updatedTrackingValue: Boolean
     ) {
-        val updatedHabits = habits.value.map { habit ->
-            if (habit.name == currentHabit.name) {
-                val updatedTracking = habit.lastFiveDayStatuses.mapIndexed { i, isDoneStatus ->
+        val updatedHabits = habits.value.map { habitRow ->
+            if (habitRow.name == currentHabitRow.name) {
+                val updatedTracking = habitRow.lastFiveDatesStatuses.mapIndexed { i, isDoneStatus ->
                     if (i == dayColumnIndex) updatedTrackingValue else isDoneStatus
                 }
-                habitDataSource.updateTracking(habit.name, updatedTracking) // Persist the updated status to the database
-                HabitRowData(habit.name, updatedTracking)
-            } else habit
+                habitDataDao.updateTracking(habitRow.name, updatedTracking) // Persist the updated status to the database
+                HabitRowData(habitRow.name, updatedTracking)
+            } else habitRow
         }
         // TODO is it ok to do this here? or should the Database and mutable state variable
         // be connected more atomically? IS THE MUTABLE STATE VARIABLE EVEN NEEDED ANYMORE?
@@ -53,11 +48,5 @@ class MainModel(private val habitDataSource: HabitDataSource) {
         habits.value = updatedHabits.toList()
     }
 
-    // TODO figure out where to put these auxiliary/util methods
-
-    fun getLastFiveDays(): List<String> {
-        val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
-        return List(5) { i -> current.minus(i, DateTimeUnit.DAY).dayOfMonth.toString() }.reversed()
-    }
 }
 

@@ -5,7 +5,7 @@ import MainModel
 import mvvm.MainViewModel
 import androidx.compose.runtime.MutableState
 import app.cash.sqldelight.Query
-import datasources.HabitLocalDataSource
+import datasources.HabitDataRepository
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -20,6 +20,7 @@ import org.junit.Test
 import tremens.database.HabitDatabase
 import tremens.database.HabitQueries
 import tremens.database.TrackingQueries
+import utils.Util
 
 const val EMPTY_STRING = ""
 
@@ -35,7 +36,7 @@ class MainModelTest {
     private lateinit var habitDatabase: HabitDatabase
     private lateinit var habitQueries: HabitQueries
     private lateinit var trackingQueries: TrackingQueries
-    private lateinit var habitLocalDataSource: HabitLocalDataSource
+    private lateinit var habitDataRepository: HabitDataRepository
 
     @Before
     fun setUp() {
@@ -46,10 +47,10 @@ class MainModelTest {
             every { habitQueries } returns this@MainModelTest.habitQueries
             every { trackingQueries } returns this@MainModelTest.trackingQueries
         }
-        habitLocalDataSource = HabitLocalDataSource(habitDatabase)
+        habitDataRepository = HabitDataRepository(habitDatabase)
 
         // MainModel and MainViewModel setup
-        mainModel = MainModel(habitLocalDataSource)
+        mainModel = MainModel(habitDataRepository)
         mainViewModel = MainViewModel(mainModel)
     }
 
@@ -64,7 +65,7 @@ class MainModelTest {
         coEvery { habitQueries.getHabitId(any()) } returns mockQuery
 
         // Act
-        habitLocalDataSource.addHabit(habit)
+        habitDataRepository.addHabit(habit)
 
         // Assert
         coVerify(exactly = 1) { habitQueries.insertHabit("Drink Water") }
@@ -73,7 +74,7 @@ class MainModelTest {
 
     @Test
     fun testGetLastFiveDays() {
-        val lastFiveDays = mainModel.getLastFiveDays()
+        val lastFiveDays = Util.getLastFiveDaysAsStrings()
         assertEquals(5, lastFiveDays.size)
     }
 
@@ -107,7 +108,7 @@ class MainModelTest {
         habits.value = listOf(initialHabit)
         mainModel.updateHabitStatus(habits, initialHabit, 0, true)
 
-        val updatedStatus = habits.value.first().lastFiveDayStatuses.first()
+        val updatedStatus = habits.value.first().lastFiveDatesStatuses.first()
         assertTrue(updatedStatus)
     }
 

@@ -97,7 +97,7 @@ fun HabitRowHeader(title: String, lastFiveDays: List<String>) {
 @Composable
 fun HabitList(viewModel: MainViewModel) {
     LazyColumn {
-        itemsIndexed(viewModel.habits.value) { index, habit ->
+        itemsIndexed(viewModel.habitRows.value) { index, habit ->
             HabitRow(
                 habit = habit,
                 deleteFunction = { viewModel.removeHabit(index) },
@@ -129,7 +129,7 @@ fun HabitRow(
             textAlign = TextAlign.Start
         )
 
-        val isDoneList = habit.lastFiveDayStatuses
+        val isDoneList = habit.lastFiveDatesStatuses
 
         StatusCirclesRow(
             updateHabitFunction = { statusCircleIndex: Int, status: Boolean -> updateHabitStatus(statusCircleIndex, status) },

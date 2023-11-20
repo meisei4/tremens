@@ -3,8 +3,8 @@ CREATE TABLE Habit (
     Name TEXT NOT NULL UNIQUE
 );
 
-selectAllHabitNames:
-SELECT Name FROM Habit;
+selectAllHabits:
+SELECT * FROM Habit;
 
 getHabitId:
 SELECT HabitID FROM Habit WHERE Name = ?;

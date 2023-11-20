@@ -1,6 +1,6 @@
 import androidx.compose.ui.window.ComposeUIViewController
 import datasources.HabitDBDriverFactory
-import datasources.HabitLocalDataSource
+import datasources.HabitDataRepository
 import mvvm.MainViewModel
 import tremens.database.HabitDatabase
 
@@ -12,7 +12,7 @@ fun MainViewController() = ComposeUIViewController {
     AppScreen(
         viewModel =  MainViewModel(
             model = MainModel(
-                habitDataSource = HabitLocalDataSource(
+                habitDataDao = HabitDataRepository(
                     database = createTestDatabase(
                         driverFactory = HabitDBDriverFactory()
                     )

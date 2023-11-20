@@ -1,7 +1,7 @@
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import datasources.HabitDBDriverFactory
-import datasources.HabitLocalDataSource
+import datasources.HabitDataRepository
 import mvvm.MainViewModel
 import tremens.database.HabitDatabase
 
@@ -10,7 +10,7 @@ actual fun getPlatformName(): String = "Android"
 @Composable fun MainView() = AppScreen(
     viewModel = MainViewModel(
         model = MainModel(
-            habitDataSource = HabitLocalDataSource(
+            habitDataDao = HabitDataRepository(
                 database = createTestDatabase(HabitDBDriverFactory(LocalContext.current))
             )
         )

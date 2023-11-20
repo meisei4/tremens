@@ -9,11 +9,11 @@ CREATE TABLE Tracking (
 insertTracking:
 INSERT OR IGNORE INTO Tracking(HabitID, Date) VALUES (?, ?);
 
-selectTrackingForHabitOnDates:
+selectTrackingForHabitBetweenDates:
 SELECT Date
 FROM Tracking
-WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?)
-AND Date IN (?, ?, ?, ?, ?);
+WHERE HabitID = ?
+AND Date >= ? AND Date <= ?;
 
 deleteTrackingForDate:
 DELETE FROM Tracking
@@ -21,7 +21,10 @@ WHERE HabitID = ?
 AND Date = ?;
 
 selectTrackingForHabit:
-SELECT Date FROM Tracking WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?);
+SELECT Date
+FROM Tracking
+WHERE HabitID = ?;
+
 
 deleteTrackingForHabit:
 DELETE FROM Tracking WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?);

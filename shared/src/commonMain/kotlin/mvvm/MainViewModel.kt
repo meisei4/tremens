@@ -3,16 +3,18 @@ package mvvm
 import MainModel
 import ViewModel
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import datasources.HabitRowData
 import kotlinx.coroutines.launch
+import utils.Util
 
 class MainViewModel(val model: MainModel) : ViewModel() {
 
     var newHabit: MutableState<HabitRowData> = mutableStateOf(HabitRowData("", List(5) { false }))
-    var lastFiveDays: List<String> = model.getLastFiveDays()
+    var lastFiveDays: List<String> = Util.getLastFiveDaysAsStrings()
     var errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
-    val habits: MutableState<List<HabitRowData>> = mutableStateOf(listOf())
+    val habitRows: MutableState<List<HabitRowData>> = mutableStateOf(listOf())
 
     init {
         loadHabits()
@@ -20,7 +22,7 @@ class MainViewModel(val model: MainModel) : ViewModel() {
 
     private fun loadHabits() {
         viewModelScope.launch {
-            habits.value = model.getAllHabits()
+            habitRows.value = model.getAllHabits()
         }
     }
     fun addHabit() {
@@ -41,7 +43,7 @@ class MainViewModel(val model: MainModel) : ViewModel() {
         // of the function, rather than adding to the state variable during each validation check.
         // This is because during validation, an error could occur causing the function to be exited
         // but also while having already altered the error state var, making it an incomplete update
-        val errors = mutableListOf<String>()
+        val errors = mutableStateListOf<String>()
 
         // This is no longer enterable based on the enabled attribute of the AddHabit Button, but
         // keeping as an example for future validation
@@ -53,12 +55,12 @@ class MainViewModel(val model: MainModel) : ViewModel() {
     }
 
     fun updateHabitStatus(targetHabit: HabitRowData, dayColumnIndex: Int, updatedStatus: Boolean) {
-        model.updateHabitStatus(habits, targetHabit, dayColumnIndex, updatedStatus)
+        model.updateHabitStatus(habitRows, targetHabit, dayColumnIndex, updatedStatus)
     }
 
     fun removeHabit(index: Int) {
         viewModelScope.launch {
-            val habitToRemove = habits.value[index]
+            val habitToRemove = habitRows.value[index]
             model.removeHabit(habitToRemove.name)
             loadHabits()
         }
