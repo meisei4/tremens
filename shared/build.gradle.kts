@@ -33,6 +33,8 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.0.0")
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material)

@@ -1,3 +1,21 @@
+CREATE TABLE Habit (
+    HabitID INTEGER PRIMARY KEY,
+    Name TEXT NOT NULL UNIQUE
+);
+
+selectAllHabits:
+SELECT * FROM Habit;
+
+getHabitId:
+SELECT HabitID FROM Habit WHERE Name = ?;
+
+insertHabit:
+INSERT INTO Habit(Name) VALUES (?);
+
+deleteHabit:
+DELETE FROM Habit WHERE Name = ?;
+
+
 CREATE TABLE Tracking (
     TrackingID INTEGER PRIMARY KEY,
     HabitID INTEGER NOT NULL,
@@ -25,6 +43,18 @@ SELECT Date
 FROM Tracking
 WHERE HabitID = ?;
 
-
 deleteTrackingForHabit:
 DELETE FROM Tracking WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?);
+
+selectHabitWithRecentTracking:
+SELECT Habit.HabitID, Habit.Name, groupedTracking.Dates
+FROM Habit
+LEFT JOIN (
+    SELECT HabitID, GROUP_CONCAT(Date) AS Dates
+    FROM Tracking
+    WHERE Date >= ? AND Date <= ?
+    GROUP BY HabitID
+) AS groupedTracking ON Habit.HabitID = groupedTracking.HabitID
+WHERE Habit.Name = ?;
+
+
