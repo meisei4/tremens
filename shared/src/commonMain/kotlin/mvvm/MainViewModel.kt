@@ -6,6 +6,9 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import datasources.HabitRowData
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import utils.Util
 
@@ -14,23 +17,22 @@ class MainViewModel(val model: MainModel) : ViewModel() {
     var newHabit: MutableState<HabitRowData> = mutableStateOf(HabitRowData("", List(5) { false }))
     var lastFiveDays: List<String> = Util.getLastFiveDaysAsStrings()
     var errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
-    val habitRows: MutableState<List<HabitRowData>> = mutableStateOf(listOf())
+    private val _habitRowsStateFlow = MutableStateFlow<List<HabitRowData>>(emptyList())
+    val habitRows: StateFlow<List<HabitRowData>> = _habitRowsStateFlow.asStateFlow()
 
     init {
-        loadHabits()
-    }
-
-    private fun loadHabits() {
         viewModelScope.launch {
-            habitRows.value = model.getAllHabits()
+            model.habitRows.collect { habits ->
+                _habitRowsStateFlow.value = habits
+            }
         }
     }
+
     fun addHabit() {
         validateNewHabitInput()
         if (errorMessages.value.isEmpty()) {
             viewModelScope.launch {
                 model.addHabit(newHabit.value)
-                loadHabits()
             }
         }
     }
@@ -55,14 +57,17 @@ class MainViewModel(val model: MainModel) : ViewModel() {
     }
 
     fun updateHabitStatus(targetHabit: HabitRowData, dayColumnIndex: Int, updatedStatus: Boolean) {
-        model.updateHabitStatus(habitRows, targetHabit, dayColumnIndex, updatedStatus)
+        // launch creates a new thread to allow for suspend functions to not block the main thread
+        // Coroutine is just a set of comannds on a separate thread
+        viewModelScope.launch {
+            model.updateHabitStatus(_habitRowsStateFlow, targetHabit, dayColumnIndex, updatedStatus)
+        }
     }
 
     fun removeHabit(index: Int) {
         viewModelScope.launch {
-            val habitToRemove = habitRows.value[index]
+            val habitToRemove = _habitRowsStateFlow.value[index]
             model.removeHabit(habitToRemove.name)
-            loadHabits()
         }
     }
 }

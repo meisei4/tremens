@@ -1,12 +1,21 @@
 import androidx.compose.runtime.MutableState
 import datasources.HabitDataDao
 import datasources.HabitRowData
-
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 
 class MainModel(private val habitDataDao: HabitDataDao) {
 
-    suspend fun getAllHabits(): List<HabitRowData> {
-        return habitDataDao.getAllHabitRows()
+    // suspend
+
+    val habitRows: Flow<List<HabitRowData>> = habitDataDao.getAllHabitRows()
+
+    // suspend functions can block the main thread when called (interrupt)
+    // requires to be ran in a thread separate than mainthread
+    suspend fun getAllHabits(): Flow<List<HabitRowData>> {
+        return habitDataDao.getAllHabitRows() //blocking call because it needs to access database
+    // (app cant continue until database sends response back.)
     }
 
     suspend fun addHabit(habitRow: HabitRowData) {
@@ -21,8 +30,8 @@ class MainModel(private val habitDataDao: HabitDataDao) {
         habitDataDao.removeHabit(habitName)
     }
 
-    fun updateHabitStatus(
-        habits: MutableState<List<HabitRowData>>,
+    suspend fun updateHabitStatus(
+        habits: MutableStateFlow<List<HabitRowData>>,
         currentHabitRow: HabitRowData,
         dayColumnIndex: Int,
         updatedTrackingValue: Boolean
@@ -32,14 +41,13 @@ class MainModel(private val habitDataDao: HabitDataDao) {
                 val updatedTracking = habitRow.lastFiveDatesStatuses.mapIndexed { i, isDoneStatus ->
                     if (i == dayColumnIndex) updatedTrackingValue else isDoneStatus
                 }
-                habitDataDao.updateTracking(habitRow.name, updatedTracking) // Persist the updated status to the database
+                habitDataDao.updateTracking(
+                    habitRow.name,
+                    updatedTracking
+                ) // Persist the updated status to the database
                 HabitRowData(habitRow.name, updatedTracking)
             } else habitRow
         }
-        // TODO is it ok to do this here? or should the Database and mutable state variable
-        // be connected more atomically? IS THE MUTABLE STATE VARIABLE EVEN NEEDED ANYMORE?
-        // need to study concept of Flow?
-
         habits.value = updatedHabits
     }
 

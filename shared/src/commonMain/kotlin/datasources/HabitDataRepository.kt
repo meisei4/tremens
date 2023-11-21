@@ -1,6 +1,7 @@
 package datasources
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import tremens.database.HabitDatabase
 import tremens.database.HabitQueries
@@ -22,9 +23,9 @@ class HabitDataRepository(database: HabitDatabase): HabitDataDao {
         datesToInsert.forEach { unixTimestamp -> trackingQueries.insertTracking(habitId, unixTimestamp) }
     }
 
-    override suspend fun getAllHabitRows(): List<HabitRowData> = withContext(Dispatchers.Unconfined) {
+    override suspend fun getAllHabitRows(): Flow<List<HabitRowData>> = withContext(Dispatchers.Unconfined) {
         val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
-        val habits = habitQueries.selectAllHabits().executeAsList()
+        val habits = habitQueries.selectAllHabits().executeAsList().first()
 
         val habitRowDataList = habits.map { habit ->
             val trackedDatesTimestamps = trackingQueries.selectTrackingForHabitBetweenDates(
@@ -44,7 +45,7 @@ class HabitDataRepository(database: HabitDatabase): HabitDataDao {
     }
 
     // TODO figure out this suspend issue and Coroutines and context
-    override fun updateTracking(habitName: String, updatedTracking: List<Boolean>) {//} = withContext(Dispatchers.Unconfined) {
+    override suspend fun updateTracking(habitName: String, updatedTracking: List<Boolean>) {//} = withContext(Dispatchers.Unconfined) {
         val habitId = habitQueries.getHabitId(habitName).executeAsOne()
         val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
 
