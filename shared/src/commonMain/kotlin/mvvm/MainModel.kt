@@ -3,18 +3,17 @@ import datasources.HabitDataDao
 import datasources.HabitRowData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
 
 class MainModel(private val habitDataDao: HabitDataDao) {
 
     // suspend
 
-    val habitRows: Flow<List<HabitRowData>> = habitDataDao.getAllHabitRows()
+    val habitRows: Flow<List<HabitRowData>> = habitDataDao.getAllHabitRowsFlow()
 
     // suspend functions can block the main thread when called (interrupt)
     // requires to be ran in a thread separate than mainthread
     suspend fun getAllHabits(): Flow<List<HabitRowData>> {
-        return habitDataDao.getAllHabitRows() //blocking call because it needs to access database
+        return habitDataDao.getAllHabitRowsFlow() //blocking call because it needs to access database
     // (app cant continue until database sends response back.)
     }
 

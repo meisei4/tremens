@@ -1,12 +1,21 @@
 package datasources
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import tremens.database.HabitDatabase
 import tremens.database.HabitQueries
 import tremens.database.TrackingQueries
 import utils.Util
+import kotlin.coroutines.CoroutineContext
 
 // This is the implementation of the HabitDataDao that interacts with the local database.
 class HabitDataRepository(database: HabitDatabase): HabitDataDao {
@@ -23,9 +32,35 @@ class HabitDataRepository(database: HabitDatabase): HabitDataDao {
         datesToInsert.forEach { unixTimestamp -> trackingQueries.insertTracking(habitId, unixTimestamp) }
     }
 
-    override suspend fun getAllHabitRows(): Flow<List<HabitRowData>> = withContext(Dispatchers.Unconfined) {
+    override suspend fun getAllHabitRowsFlow(): Flow<List<Flow<HabitRowData>>> = withContext(Dispatchers.IO) {
+        habitQueries.selectAllHabits().asFlow().mapToList(this.coroutineContext).map { habits ->
+            val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
+
+            val habitRowDataList = habits.map { habit ->
+                trackingQueries.selectTrackingForHabitBetweenDates(
+                    habit.HabitID,
+                    lastFiveDatesTimestamps[0],
+                    lastFiveDatesTimestamps[4]
+                ).asFlow().mapToList(coroutineContext).map { timestamps ->
+                    val lastFiveDatesStatuses = lastFiveDatesTimestamps.map { it in timestamps }
+                    HabitRowData(habit.Name, lastFiveDatesStatuses)
+                }
+
+                // Sneaky one liner that takes care of the true/false state of each lastfivedates,
+                // if the "it" (the unix epoch Long) is found in the returned query then
+                // the date gets mapped to true false if otherwise
+            }
+
+            habitRowDataList
+        }
+    }
+
+        //habitQueries.selectAllHabits().asFlow().mapToList().map { habit ->
+
+    override suspend fun getAllHabitRows(): List<HabitRowData> = withContext(Dispatchers.Unconfined) {
+
         val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
-        val habits = habitQueries.selectAllHabits().executeAsList().first()
+        val habits = habitQueries.selectAllHabits().executeAsList()
 
         val habitRowDataList = habits.map { habit ->
             val trackedDatesTimestamps = trackingQueries.selectTrackingForHabitBetweenDates(

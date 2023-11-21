@@ -5,6 +5,7 @@ import ViewModel
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import datasources.HabitDataDao
 import datasources.HabitRowData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,20 +13,26 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import utils.Util
 
-class MainViewModel(val model: MainModel) : ViewModel() {
+class MainViewModel(
+    habitDataDao: HabitDataDao,
+    val model: MainModel
+) : ViewModel() {
 
     var newHabit: MutableState<HabitRowData> = mutableStateOf(HabitRowData("", List(5) { false }))
     var lastFiveDays: List<String> = Util.getLastFiveDaysAsStrings()
     var errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
+
     private val _habitRowsStateFlow = MutableStateFlow<List<HabitRowData>>(emptyList())
     val habitRows: StateFlow<List<HabitRowData>> = _habitRowsStateFlow.asStateFlow()
 
+    val actualHabitRows = habitDataDao.getAllHabitRowsFlow()
+
     init {
-        viewModelScope.launch {
-            model.habitRows.collect { habits ->
-                _habitRowsStateFlow.value = habits
-            }
-        }
+//        viewModelScope.launch {
+//            model.habitRows.collect { habits ->
+//                _habitRowsStateFlow.value = habits
+//            }
+//        }
     }
 
     fun addHabit() {

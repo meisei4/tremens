@@ -21,6 +21,7 @@ fun AppScreen(viewModel: MainViewModel) {
         Modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val habits = viewModel.actualHabitRows.collectAsState(listOf())
         AppHeader()
         AddHabitField(viewModel.newHabit.value.name) { newHabitName ->
             viewModel.newHabit.value = viewModel.newHabit.value.copy(name = newHabitName)
