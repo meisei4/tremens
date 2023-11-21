@@ -101,7 +101,7 @@ fun HabitList(viewModel: MainViewModel) {
             HabitRow(
                 habit = habit,
                 deleteFunction = { viewModel.removeHabit(index) },
-                updateHabitStatus = { dayColumnIndex: Int, status: Boolean -> viewModel.updateHabitStatus(habit, dayColumnIndex, status) }
+                updateHabitStatus = { dayIndex: Int, status: Boolean -> viewModel.updateHabitStatus(habit, dayIndex, status) }
             )
             Spacer(modifier = Modifier.height(8.dp))
         }

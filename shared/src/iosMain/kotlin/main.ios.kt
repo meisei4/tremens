@@ -11,11 +11,9 @@ actual fun getPlatformName(): String = "iOS"
 fun MainViewController() = ComposeUIViewController {
     AppScreen(
         viewModel =  MainViewModel(
-            model = MainModel(
-                habitDataDao = HabitDataRepository(
-                    database = createTestDatabase(
-                        driverFactory = HabitDBDriverFactory()
-                    )
+            habitDataRepo = HabitDataRepository(
+                database = createTestDatabase(
+                    driverFactory = HabitDBDriverFactory()
                 )
             )
         )

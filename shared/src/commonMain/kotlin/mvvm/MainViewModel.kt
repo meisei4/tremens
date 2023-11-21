@@ -1,17 +1,18 @@
 package mvvm
 
-import MainModel
 import ViewModel
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import datasources.HabitDataRepository
 import datasources.HabitRowData
 import kotlinx.coroutines.launch
 import utils.Util
 
-class MainViewModel(val model: MainModel) : ViewModel() {
 
-    var newHabit: MutableState<HabitRowData> = mutableStateOf(HabitRowData("", List(5) { false }))
+class MainViewModel(private val habitDataRepo: HabitDataRepository): ViewModel() {
+
+    var newHabit: MutableState<HabitRowData> = mutableStateOf(HabitRowData("", MutableList(5) { false }))
     var lastFiveDays: List<String> = Util.getLastFiveDaysAsStrings()
     var errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
     val habitRows: MutableState<List<HabitRowData>> = mutableStateOf(listOf())
@@ -22,17 +23,18 @@ class MainViewModel(val model: MainModel) : ViewModel() {
 
     private fun loadHabits() {
         viewModelScope.launch {
-            habitRows.value = model.getAllHabits()
+            habitRows.value = habitDataRepo.getAllHabitRows()
         }
     }
+
     fun addHabit() {
         validateNewHabitInput()
         if (errorMessages.value.isEmpty()) {
             viewModelScope.launch {
-                model.addHabit(newHabit.value)
-                loadHabits()
+                habitDataRepo.addHabit(newHabit.value)
             }
         }
+        loadHabits() // TODO this constant reloading of the state variable "habitRows" will be fixed with Flows
     }
 
     private fun validateNewHabitInput() {
@@ -50,19 +52,33 @@ class MainViewModel(val model: MainModel) : ViewModel() {
         if (newHabit.value.name.isBlank()) {
             errors.add("Habit name cannot be empty")
         }
-
         errorMessages.value = errors
-    }
-
-    fun updateHabitStatus(targetHabit: HabitRowData, dayColumnIndex: Int, updatedStatus: Boolean) {
-        model.updateHabitStatus(habitRows, targetHabit, dayColumnIndex, updatedStatus)
     }
 
     fun removeHabit(index: Int) {
         viewModelScope.launch {
             val habitToRemove = habitRows.value[index]
-            model.removeHabit(habitToRemove.name)
-            loadHabits()
+            habitDataRepo.removeHabit(habitToRemove.name)
+        }
+        loadHabits() // TODO this constant reloading of the state variable "habitRows" will be fixed with Flows
+    }
+
+    fun updateHabitStatus(currentHabitRow: HabitRowData, dayIndex: Int, newStatus: Boolean) {
+        viewModelScope.launch {
+            habitRows.value = habitRows.value.map { habitRow ->
+                if (habitRow.name == currentHabitRow.name) {
+                    val updatedStatuses = habitRow.lastFiveDatesStatuses.toMutableList().apply {
+                        this[dayIndex] = newStatus
+                    }
+                    val updatedHabitRow = habitRow.copy(lastFiveDatesStatuses = updatedStatuses)
+                    habitDataRepo.updateTracking(updatedHabitRow)
+
+                    updatedHabitRow
+                } else {
+                    habitRow
+                }
+            }
         }
     }
 }
+

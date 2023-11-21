@@ -9,10 +9,8 @@ actual fun getPlatformName(): String = "Android"
 
 @Composable fun MainView() = AppScreen(
     viewModel = MainViewModel(
-        model = MainModel(
-            habitDataDao = HabitDataRepository(
-                database = createTestDatabase(HabitDBDriverFactory(LocalContext.current))
-            )
+        habitDataRepo = HabitDataRepository(
+            database = createTestDatabase(HabitDBDriverFactory(LocalContext.current))
         )
     )
 )
