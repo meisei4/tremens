@@ -6,38 +6,56 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import datasources.HabitDataRepository
 import datasources.HabitRowData
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import utils.Util
+import utils.log
 
 
 class MainViewModel(private val habitDataRepo: HabitDataRepository): ViewModel() {
 
-    var newHabit: MutableState<HabitRowData> = mutableStateOf(HabitRowData("", MutableList(5) { false }))
+    var newHabit: MutableState<String> = mutableStateOf("")
     var lastFiveDays: List<String> = Util.getLastFiveDaysAsStrings()
     var errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
-    val habitRows: MutableState<List<HabitRowData>> = mutableStateOf(listOf())
+
+    private val _habitRows = MutableStateFlow<List<HabitRowData>>(emptyList())
+    val habitRows: StateFlow<List<HabitRowData>> = _habitRows.asStateFlow()
+
 
     init {
-        loadHabits()
-    }
-
-    private fun loadHabits() {
         viewModelScope.launch {
-            habitRows.value = habitDataRepo.getAllHabitRows()
+            log("Starting to collect habit data from the repository")
+            try {
+                habitDataRepo.selectHabitTrackingJoinedTable().collect { habitList ->
+                    _habitRows.value = habitList
+                    log("Habits collected: $habitList")
+                }
+            } catch (e: Exception) {
+                // TODO this is weird that it gets entered sometimes with the message:
+                // "DispatchedCoroutine has completed normally"
+                log("Error during habit data collection: ${e.message}")
+            }
         }
     }
 
     fun addHabit() {
-        validateNewHabitInput()
-        if (errorMessages.value.isEmpty()) {
+        val errors = validateNewHabitInput()
+        if (errors.isEmpty() && newHabit.value.isNotEmpty()) {
             viewModelScope.launch {
+                log("Attempting to add habit: ${newHabit.value}")
                 habitDataRepo.addHabit(newHabit.value)
+                log("New habit added: ${newHabit.value}")
+                newHabit.value = ""
             }
+        } else {
+            log("Failed to add habit due to errors: ${errors.joinToString()}")
+            errorMessages.value = errors
         }
-        loadHabits() // TODO this constant reloading of the state variable "habitRows" will be fixed with Flows
     }
 
-    private fun validateNewHabitInput() {
+    private fun validateNewHabitInput() : List<String> {
         // Learning Note: This local "errors" val is here to provide ATOMICITY:
         // Because more validation checks will potentially be added to this function in the future,
         // we would like to prevent it from performing any incomplete updates to the error state
@@ -47,38 +65,31 @@ class MainViewModel(private val habitDataRepo: HabitDataRepository): ViewModel()
         // but also while having already altered the error state var, making it an incomplete update
         val errors = mutableStateListOf<String>()
 
-        // This is no longer enterable based on the enabled attribute of the AddHabit Button, but
-        // keeping as an example for future validation
-        if (newHabit.value.name.isBlank()) {
-            errors.add("Habit name cannot be empty")
+        if (_habitRows.value.any { it.name == newHabit.value }) {
+            errors.add("A habit with this name already exists")
+            log("Validation error: A habit with this name already exists") // Log the validation error
         }
-        errorMessages.value = errors
+        return errors
     }
 
     fun removeHabit(index: Int) {
         viewModelScope.launch {
             val habitToRemove = habitRows.value[index]
+            log("Removing habit: ${habitToRemove.name}") // Log the habit removal
             habitDataRepo.removeHabit(habitToRemove.name)
         }
-        loadHabits() // TODO this constant reloading of the state variable "habitRows" will be fixed with Flows
     }
 
     fun updateHabitStatus(currentHabitRow: HabitRowData, dayIndex: Int, newStatus: Boolean) {
         viewModelScope.launch {
-            habitRows.value = habitRows.value.map { habitRow ->
-                if (habitRow.name == currentHabitRow.name) {
-                    val updatedStatuses = habitRow.lastFiveDatesStatuses.toMutableList().apply {
-                        this[dayIndex] = newStatus
-                    }
-                    val updatedHabitRow = habitRow.copy(lastFiveDatesStatuses = updatedStatuses)
-                    habitDataRepo.updateTracking(updatedHabitRow)
-
-                    updatedHabitRow
-                } else {
-                    habitRow
-                }
+            val updatedStatuses = currentHabitRow.lastFiveDatesStatuses.toMutableList().apply {
+                this[dayIndex] = newStatus
             }
+            val updatedHabitRow = currentHabitRow.copy(lastFiveDatesStatuses = updatedStatuses)
+            log("Updating habit status for: ${currentHabitRow.name}, Day index: $dayIndex, New status: $newStatus") // Log the status update
+            habitDataRepo.updateTracking(updatedHabitRow)
         }
     }
 }
+
 
