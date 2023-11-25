@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import datasources.HabitRowData
 import mvvm.MainViewModel
+import utils.log
 
 @Composable
 fun AppScreen(viewModel: MainViewModel) {
@@ -22,10 +23,10 @@ fun AppScreen(viewModel: MainViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AppHeader()
-        AddHabitField(viewModel.newHabit.value.name) { newHabitName ->
-            viewModel.newHabit.value = viewModel.newHabit.value.copy(name = newHabitName)
+        AddHabitField(viewModel.newHabit.value) { newHabitName ->
+            viewModel.newHabit.value = newHabitName
         }
-        AddHabitButton(viewModel.newHabit) { viewModel.addHabit() }
+        AddHabitButton(viewModel.newHabit.value) { viewModel.addHabit() }
         DayHeader(viewModel.lastFiveDays)
         HabitList(viewModel)
     }
@@ -34,10 +35,10 @@ fun AppScreen(viewModel: MainViewModel) {
 //TODO Louis idea here for View<Screen thing, I forgot what it was
 @Composable
 fun AppView(
-    newHabit: MutableState<HabitRowData>,
+    newHabit: MutableState<String>,
     addHabit: () -> Unit
 ) {
-    AddHabitButton(newHabit = newHabit, onClick = addHabit)
+    AddHabitButton(newHabitName = newHabit.value, onClick = addHabit)
 }
 
 @Composable
@@ -48,13 +49,22 @@ fun AppHeader() {
 
 @Composable
 fun AddHabitField(newHabitName: String, onValueChange: (String) -> Unit) {
-    TextField(value = newHabitName, onValueChange = onValueChange, label = { Text("New Habit") })
+    TextField(
+        value = newHabitName,
+        onValueChange = onValueChange,
+        label = { Text("New Habit") },
+        singleLine = true // Add this to ensure the TextField does not expand to multiple lines
+    )
 }
 
 @Composable
-fun AddHabitButton(newHabit: State<HabitRowData>, onClick: () -> Unit) {
-    Button(onClick = onClick,
-    enabled = newHabit.value.name.isNotEmpty()) { Text("+") }
+fun AddHabitButton(newHabitName: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        enabled = newHabitName.isNotEmpty() // Check if the habit name is not empty
+    ) {
+        Text("+")
+    }
     Spacer(modifier = Modifier.height(16.dp))
 }
 
@@ -96,8 +106,14 @@ fun HabitRowHeader(title: String, lastFiveDays: List<String>) {
 
 @Composable
 fun HabitList(viewModel: MainViewModel) {
+    val habitRows by viewModel.habitRows.collectAsState()
+
+    LaunchedEffect(habitRows) {
+        log("Habit list updated (View level): $habitRows")
+    }
+
     LazyColumn {
-        itemsIndexed(viewModel.habitRows.value) { index, habit ->
+        itemsIndexed(habitRows) { index, habit ->
             HabitRow(
                 habit = habit,
                 deleteFunction = { viewModel.removeHabit(index) },

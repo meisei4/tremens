@@ -3,9 +3,6 @@ CREATE TABLE Habit (
     Name TEXT NOT NULL UNIQUE
 );
 
-selectAllHabits:
-SELECT * FROM Habit;
-
 getHabitId:
 SELECT HabitID FROM Habit WHERE Name = ?;
 
@@ -24,24 +21,14 @@ CREATE TABLE Tracking (
     FOREIGN KEY (HabitID) REFERENCES Habit(HabitID)
 );
 
+--TODO not sure if this IGNORE actually works well with the UNIQUE constraint
 insertTracking:
 INSERT OR IGNORE INTO Tracking(HabitID, Date) VALUES (?, ?);
-
-selectTrackingForHabitBetweenDates:
-SELECT Date
-FROM Tracking
-WHERE HabitID = ?
-AND Date >= ? AND Date <= ?;
 
 deleteTrackingForDate:
 DELETE FROM Tracking
 WHERE HabitID = ?
 AND Date = ?;
-
-selectTrackingForHabit:
-SELECT Date
-FROM Tracking
-WHERE HabitID = ?;
 
 deleteTrackingForHabit:
 DELETE FROM Tracking WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?);
@@ -54,7 +41,6 @@ LEFT JOIN (
     FROM Tracking
     WHERE Date >= ? AND Date <= ?
     GROUP BY HabitID
-) AS groupedTracking ON Habit.HabitID = groupedTracking.HabitID
-WHERE Habit.Name = ?;
+) AS groupedTracking ON Habit.HabitID = groupedTracking.HabitID;
 
 

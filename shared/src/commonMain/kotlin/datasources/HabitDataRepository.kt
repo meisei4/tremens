@@ -2,75 +2,66 @@ package datasources
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import tremens.database.HabitDatabase
 import tremens.database.HabitTrackingQueries
+import tremens.database.SelectHabitWithRecentTracking
 import utils.Util
+import utils.ioDispatcher
+import utils.log
 
 class HabitDataRepository(database: HabitDatabase) {
 
     private val habitTrackingQueries: HabitTrackingQueries = database.habitTrackingQueries
 
-    suspend fun addHabit(habitRow: HabitRowData) = withContext(Dispatchers.Unconfined) {
-        habitTrackingQueries.insertHabit(habitRow.name)
-        val habitId = habitTrackingQueries.getHabitId(habitRow.name).executeAsOne()
+    suspend fun selectHabitTrackingJoinedTable(): Flow<List<HabitRowData>> = withContext(ioDispatcher()) {
         val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
-        val datesToStatusMap = lastFiveDatesTimestamps.zip(habitRow.lastFiveDatesStatuses).toMap()
-        val datesToInsert = datesToStatusMap.filter { it.value }.keys // only add true statused dates
-        datesToInsert.forEach { unixTimestamp -> habitTrackingQueries.insertTracking(habitId, unixTimestamp) }
-    }
+        log("Selecting habit tracking joined table with date range: ${lastFiveDatesTimestamps.first()} to ${lastFiveDatesTimestamps.last()}")
 
-    suspend fun getAllHabitRows(): List<HabitRowData> = withContext(Dispatchers.Unconfined) {
-        val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
-        val habits = habitTrackingQueries.selectAllHabits().executeAsList()
+        val habitQueryResultFlow = habitTrackingQueries.selectHabitWithRecentTracking(
+            lastFiveDatesTimestamps.first(),
+            lastFiveDatesTimestamps.last()
+        ).asFlow()
+        // TODO If i collect with toList here everything breaks? still unable to effectively debug this or log it
+        // val habitQueryResultList = habitQueryResultFlow.toList()
+        // log("Habit data selected - Count: ${habitQueryResultList.size}, Data: $habitQueryResultList")
 
-        val habitRowDataList = habits.map { habit ->
-            val trackedDatesTimestamps = habitTrackingQueries.selectTrackingForHabitBetweenDates(
-                habit.HabitID,
-                lastFiveDatesTimestamps[0],
-                lastFiveDatesTimestamps[4]
-            ).executeAsList()
-
-            // Sneaky one liner that takes care of the true/false state of each lastFiveDates,
-            // if the "it" (the unix epoch Long) is found in the returned query then
-            // the date gets mapped to true false if otherwise
-            val lastFiveDatesStatuses = lastFiveDatesTimestamps.map { it in trackedDatesTimestamps }.toMutableList()
-            HabitRowData(habit.Name, lastFiveDatesStatuses)
-        }
-        return@withContext habitRowDataList
-    }
-
-    suspend fun selectHabitTrackingJoinedTable(habitName: String): Flow<List<HabitRowData>> = withContext(Dispatchers.Unconfined)  {
-        val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
-        return@withContext habitTrackingQueries.selectHabitWithRecentTracking(
-            lastFiveDatesTimestamps[0],
-            lastFiveDatesTimestamps[4],
-            habitName // TODO select all habits? just one?
-        ).asFlow() // Convert Query to Flow
-            .mapToList(this.coroutineContext) // Execute the Query and convert the results to a List
-            .map { resultList ->
-                resultList.map { selectHabitWithRecentTracking ->
-                    val splitDates = if (selectHabitWithRecentTracking.Dates?.isNotBlank() == true) {
-                        selectHabitWithRecentTracking.Dates.split(",")
-                    } else {
-                        emptyList()
-                    }
-                    val dateLongs = splitDates.mapNotNull { it.toLongOrNull() }
-                    val lastFiveDatesStatuses = lastFiveDatesTimestamps.map { timestamp ->
-                        timestamp in dateLongs
-                    }
-                    HabitRowData(selectHabitWithRecentTracking.Name, lastFiveDatesStatuses)
-                }
+        habitQueryResultFlow.mapToList(this.coroutineContext).map { joinedHabitTrackingQueryResults ->
+            joinedHabitTrackingQueryResults.map { joinedHabitTrackingRow ->
+                val lastFiveDatesStatuses = getLastFiveDatesStatuses(joinedHabitTrackingRow, lastFiveDatesTimestamps)
+                val habitRowData = HabitRowData(joinedHabitTrackingRow.Name, lastFiveDatesStatuses)
+                log("Mapped HabitRowData for habit ${habitRowData.name}, Statuses: $lastFiveDatesStatuses, Dates: $lastFiveDatesTimestamps")
+                habitRowData
             }
+        }
     }
 
+    private fun getLastFiveDatesStatuses(joinedHabitTrackingRow: SelectHabitWithRecentTracking, lastFiveDatesTimestamps: List<Long>): List<Boolean> {
+        if (joinedHabitTrackingRow.Dates != null) {
+            val trackedDatesUnixTimestamps = joinedHabitTrackingRow.Dates.split(",").mapNotNull(String::toLongOrNull)
+            return lastFiveDatesTimestamps.map { it in trackedDatesUnixTimestamps }
+        } else {
+            return lastFiveDatesTimestamps.map { false }
+        }
+    }
 
+    suspend fun addHabit(habitName: String) = withContext(ioDispatcher()) {
+        habitTrackingQueries.insertHabit(habitName)
+        // Retrieve the new habit's ID
+        val habitId = habitTrackingQueries.getHabitId(habitName).executeAsOne()
+        // TODO initial untracked table update (maybe this is needed to recognize need for emission?
+        habitTrackingQueries.insertTracking(habitId, -1)
+    }
 
-    suspend fun updateTracking(habit: HabitRowData) = withContext(Dispatchers.Unconfined) {
+    suspend fun removeHabit(habitName: String) = withContext(ioDispatcher()) {
+        //TODO add cascading delete when supported
+        habitTrackingQueries.deleteTrackingForHabit(habitName)
+        habitTrackingQueries.deleteHabit(habitName)
+    }
+
+    suspend fun updateTracking(habit: HabitRowData) = withContext(ioDispatcher()) {
         val habitId = habitTrackingQueries.getHabitId(habit.name).executeAsOne()
         val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
         val dateToStatusMap = lastFiveDatesTimestamps.zip(habit.lastFiveDatesStatuses).toMap()
@@ -84,14 +75,6 @@ class HabitDataRepository(database: HabitDatabase) {
                 habitTrackingQueries.deleteTrackingForDate(habitId, date)
             }
         }
-    }
-
-
-
-    suspend fun removeHabit(habitName: String) = withContext(Dispatchers.Unconfined) {
-        //TODO add cascading delete when supported
-        habitTrackingQueries.deleteTrackingForHabit(habitName)
-        habitTrackingQueries.deleteHabit(habitName)
     }
 
 }
