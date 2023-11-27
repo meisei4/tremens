@@ -6,6 +6,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayAt
+import kotlinx.datetime.todayIn
 
 class Util {
 
@@ -13,12 +14,12 @@ class Util {
         private val TIME_ZONE: TimeZone = TimeZone.currentSystemDefault()
 
         fun getLastFiveDaysAsStrings(): List<String> {
-            val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
+            val current = Clock.System.todayIn(TimeZone.currentSystemDefault())
             return List(5) { i -> current.minus(i, DateTimeUnit.DAY).dayOfMonth.toString() }.reversed()
         }
 
         fun getLastFiveDatesAsTimestamps(): List<Long> {
-            val current = Clock.System.todayAt(TimeZone.currentSystemDefault())
+            val current = Clock.System.todayIn(TimeZone.currentSystemDefault())
             return List(5) { i -> current.minus(i, DateTimeUnit.DAY).atStartOfDayIn(TIME_ZONE).epochSeconds}.reversed()
         }
     }

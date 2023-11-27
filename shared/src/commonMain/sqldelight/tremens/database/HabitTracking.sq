@@ -12,7 +12,6 @@ INSERT INTO Habit(Name) VALUES (?);
 deleteHabit:
 DELETE FROM Habit WHERE Name = ?;
 
-
 CREATE TABLE Tracking (
     TrackingID INTEGER PRIMARY KEY,
     HabitID INTEGER NOT NULL,
@@ -42,5 +41,3 @@ LEFT JOIN (
     WHERE Date >= ? AND Date <= ?
     GROUP BY HabitID
 ) AS groupedTracking ON Habit.HabitID = groupedTracking.HabitID;
-
-

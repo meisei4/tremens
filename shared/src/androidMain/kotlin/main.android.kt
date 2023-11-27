@@ -1,13 +1,14 @@
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.Composable
 import datasources.HabitDBDriverFactory
 import datasources.HabitDataRepository
-import mvvm.MainViewModel
 import tremens.database.HabitDatabase
+import mvvm.MainViewModel
 
 actual fun getPlatformName(): String = "Android"
 
-@Composable fun MainView() = AppScreen(
+@Composable
+fun MainView() = AppScreen(
     viewModel = MainViewModel(
         habitDataRepo = HabitDataRepository(
             database = createTestDatabase(HabitDBDriverFactory(LocalContext.current))

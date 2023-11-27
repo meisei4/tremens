@@ -1,88 +1,132 @@
+@file:Suppress("UnstableApiUsage")
+
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("multiplatform")
-    id("com.android.library")
+    kotlin("native.cocoapods")
+    kotlin("plugin.serialization")
     id("org.jetbrains.compose")
+    id("com.android.library")
     id("app.cash.sqldelight")
-    kotlin("plugin.serialization") version "1.9.0"
-}
-
-sqldelight {
-    databases {
-        create("HabitDatabase") {
-            packageName.set("tremens.database")
-        }
-    }
-}
-
-kotlin {
-    androidTarget()
-
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "shared"
-            isStatic = true
-        }
-    }
-
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-                implementation("app.cash.sqldelight:coroutines-extensions:2.0.0")
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material)
-                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                implementation(compose.components.resources)
-            }
-        }
-        val androidMain by getting {
-            dependencies {
-                implementation("app.cash.sqldelight:android-driver:2.0.0")
-                api("androidx.activity:activity-compose:1.7.2")
-                api("androidx.appcompat:appcompat:1.6.1")
-                api("androidx.lifecycle:lifecycle-common:2.6.2")
-                api("androidx.core:core-ktx:1.10.1")
-                api("androidx.compose.ui:ui-tooling-preview:1.5.4")
-            }
-        }
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
-        val iosMain by creating {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
-            dependencies {
-                implementation("app.cash.sqldelight:native-driver:2.0.0")
-            }
-        }
-    }
+    //id("com.google.devtools.ksp") version "1.9.20-1.0.14"
 }
 
 android {
-    compileSdk = (findProperty("android.compileSdk") as String).toInt()
-    namespace = "com.myapplication.common"
-
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-
+    namespace = "com.delerium.tremens.common"
+    compileSdk = libs.versions.compileSdk.get().toInt()
     defaultConfig {
-        minSdk = (findProperty("android.minSdk") as String).toInt()
+        minSdk = libs.versions.minSdk.get().toInt()
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
+    lint {
+        warningsAsErrors = true
+        abortOnError = true
+    }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlin {
-        jvmToolchain(17)
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+version = "1.2"
+
+kotlin {
+    @Suppress("OPT_IN_USAGE")
+    targetHierarchy.default()
+    androidTarget()
+    ios()
+    // Note: iosSimulatorArm64 target requires that all dependencies have M1 support
+    iosSimulatorArm64()
+
+    sourceSets {
+        all {
+            languageSettings.apply {
+                optIn("kotlin.RequiresOptIn")
+                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                optIn("kotlin.time.ExperimentalTime")
+            }
+        }
+
+        val commonMain by getting {
+            dependencies {
+                implementation(libs.coroutines.core)
+                implementation(libs.sqlDelight.coroutinesExt)
+                implementation(libs.multiplatformSettings.common)
+                implementation(libs.kotlinx.dateTime)
+                implementation(libs.compose.foundation)
+                implementation(libs.compose.material)
+                implementation(libs.compose.runtime)
+            }
+        }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(libs.bundles.shared.commonTest)
+            }
+        }
+
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.androidx.lifecycle.viewmodel)
+                implementation(libs.sqlDelight.android)
+
+            }
+        }
+
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.bundles.shared.androidTest)
+            }
+        }
+
+        val iosMain by getting {
+            dependencies {
+                implementation(libs.sqlDelight.native)
+            }
+        }
+    }
+
+    cocoapods {
+        framework {
+            //isStatic = false // SwiftUI preview requires dynamic framework
+            linkerOpts("-lsqlite3")
+        }
+        podfile = project.file("../iosApp/Podfile")
+    }
+}
+
+//Mockative insanity
+//dependencies {
+//    configurations
+//        .filter { it.name.startsWith("ksp") && it.name.contains("Test") }
+//        .forEach {
+//            add(it.name, libs.mockative.processor)
+//        }
+//}
+
+sqldelight {
+    databases.create("HabitDatabase") {
+        packageName.set("tremens.database")
     }
 }

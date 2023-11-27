@@ -14,7 +14,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import datasources.HabitRowData
 import mvvm.MainViewModel
-import utils.log
 
 @Composable
 fun AppScreen(viewModel: MainViewModel) {
@@ -109,7 +108,7 @@ fun HabitList(viewModel: MainViewModel) {
     val habitRows by viewModel.habitRows.collectAsState()
 
     LaunchedEffect(habitRows) {
-        log("Habit list updated (View level): $habitRows")
+        //Logger.log("Habit list updated (View level): $habitRows")
     }
 
     LazyColumn {

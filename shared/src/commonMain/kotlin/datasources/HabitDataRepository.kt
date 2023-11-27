@@ -8,17 +8,17 @@ import kotlinx.coroutines.withContext
 import tremens.database.HabitDatabase
 import tremens.database.HabitTrackingQueries
 import tremens.database.SelectHabitWithRecentTracking
+import utils.Logger
 import utils.Util
 import utils.ioDispatcher
-import utils.log
 
 class HabitDataRepository(database: HabitDatabase) {
 
-    private val habitTrackingQueries: HabitTrackingQueries = database.habitTrackingQueries
+    val habitTrackingQueries: HabitTrackingQueries = database.habitTrackingQueries
 
     suspend fun selectHabitTrackingJoinedTable(): Flow<List<HabitRowData>> = withContext(ioDispatcher()) {
         val lastFiveDatesTimestamps = Util.getLastFiveDatesAsTimestamps()
-        log("Selecting habit tracking joined table with date range: ${lastFiveDatesTimestamps.first()} to ${lastFiveDatesTimestamps.last()}")
+        //Logger.log("Selecting habit tracking joined table with date range: ${lastFiveDatesTimestamps.first()} to ${lastFiveDatesTimestamps.last()}")
 
         val habitQueryResultFlow = habitTrackingQueries.selectHabitWithRecentTracking(
             lastFiveDatesTimestamps.first(),
@@ -32,7 +32,7 @@ class HabitDataRepository(database: HabitDatabase) {
             joinedHabitTrackingQueryResults.map { joinedHabitTrackingRow ->
                 val lastFiveDatesStatuses = getLastFiveDatesStatuses(joinedHabitTrackingRow, lastFiveDatesTimestamps)
                 val habitRowData = HabitRowData(joinedHabitTrackingRow.Name, lastFiveDatesStatuses)
-                log("Mapped HabitRowData for habit ${habitRowData.name}, Statuses: $lastFiveDatesStatuses, Dates: $lastFiveDatesTimestamps")
+                //Logger.log("Mapped HabitRowData for habit ${habitRowData.name}, Statuses: $lastFiveDatesStatuses, Dates: $lastFiveDatesTimestamps")
                 habitRowData
             }
         }
@@ -76,5 +76,4 @@ class HabitDataRepository(database: HabitDatabase) {
             }
         }
     }
-
 }

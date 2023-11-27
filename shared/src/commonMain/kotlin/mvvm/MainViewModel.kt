@@ -2,7 +2,6 @@ package mvvm
 
 import ViewModel
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import datasources.HabitDataRepository
 import datasources.HabitRowData
@@ -11,31 +10,33 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import utils.Util
-import utils.log
-
+import utils.Logger
 
 class MainViewModel(private val habitDataRepo: HabitDataRepository): ViewModel() {
 
-    var newHabit: MutableState<String> = mutableStateOf("")
+    private val _newHabit: MutableState<String> = mutableStateOf("")
+    val newHabit = _newHabit
+
     var lastFiveDays: List<String> = Util.getLastFiveDaysAsStrings()
-    var errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
+
+    private val _errorMessages: MutableState<List<String>> = mutableStateOf(emptyList())
+    val errorMessages = _errorMessages
 
     private val _habitRows = MutableStateFlow<List<HabitRowData>>(emptyList())
     val habitRows: StateFlow<List<HabitRowData>> = _habitRows.asStateFlow()
 
-
     init {
         viewModelScope.launch {
-            log("Starting to collect habit data from the repository")
+            Logger.log("Starting to collect habit data from the repository")
             try {
                 habitDataRepo.selectHabitTrackingJoinedTable().collect { habitList ->
                     _habitRows.value = habitList
-                    log("Habits collected: $habitList")
+                    Logger.log("Habits collected: $habitList")
                 }
             } catch (e: Exception) {
                 // TODO this is weird that it gets entered sometimes with the message:
                 // "DispatchedCoroutine has completed normally"
-                log("Error during habit data collection: ${e.message}")
+                Logger.log("Error during habit data collection: ${e.message}")
             }
         }
     }
@@ -44,14 +45,14 @@ class MainViewModel(private val habitDataRepo: HabitDataRepository): ViewModel()
         val errors = validateNewHabitInput()
         if (errors.isEmpty() && newHabit.value.isNotEmpty()) {
             viewModelScope.launch {
-                log("Attempting to add habit: ${newHabit.value}")
+                //Logger.log("Attempting to add habit: ${newHabit.value}")
                 habitDataRepo.addHabit(newHabit.value)
-                log("New habit added: ${newHabit.value}")
-                newHabit.value = ""
+                //Logger.log("New habit added: ${newHabit.value}")
+                _newHabit.value = ""
             }
         } else {
-            log("Failed to add habit due to errors: ${errors.joinToString()}")
-            errorMessages.value = errors
+            //Logger.log("Failed to add habit due to errors: ${errors.joinToString()}")
+            _errorMessages.value = errors
         }
     }
 
@@ -63,11 +64,11 @@ class MainViewModel(private val habitDataRepo: HabitDataRepository): ViewModel()
         // of the function, rather than adding to the state variable during each validation check.
         // This is because during validation, an error could occur causing the function to be exited
         // but also while having already altered the error state var, making it an incomplete update
-        val errors = mutableStateListOf<String>()
+        val errors = mutableListOf<String>()
 
         if (_habitRows.value.any { it.name == newHabit.value }) {
             errors.add("A habit with this name already exists")
-            log("Validation error: A habit with this name already exists") // Log the validation error
+            Logger.log("Validation error: A habit with this name already exists") // Log the validation error
         }
         return errors
     }
@@ -75,7 +76,7 @@ class MainViewModel(private val habitDataRepo: HabitDataRepository): ViewModel()
     fun removeHabit(index: Int) {
         viewModelScope.launch {
             val habitToRemove = habitRows.value[index]
-            log("Removing habit: ${habitToRemove.name}") // Log the habit removal
+            Logger.log("Removing habit: ${habitToRemove.name}") // Log the habit removal
             habitDataRepo.removeHabit(habitToRemove.name)
         }
     }
@@ -86,7 +87,7 @@ class MainViewModel(private val habitDataRepo: HabitDataRepository): ViewModel()
                 this[dayIndex] = newStatus
             }
             val updatedHabitRow = currentHabitRow.copy(lastFiveDatesStatuses = updatedStatuses)
-            log("Updating habit status for: ${currentHabitRow.name}, Day index: $dayIndex, New status: $newStatus") // Log the status update
+            Logger.log("Updating habit status for: ${currentHabitRow.name}, Day index: $dayIndex, New status: $newStatus") // Log the status update
             habitDataRepo.updateTracking(updatedHabitRow)
         }
     }
