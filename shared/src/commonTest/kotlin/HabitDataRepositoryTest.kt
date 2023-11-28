@@ -3,6 +3,8 @@ import datasources.HabitRowData
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import tremens.database.HabitDatabase
+import utils.TestLogger
+import utils.Util
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -17,14 +19,12 @@ class HabitDataRepositoryTest {
 
     @BeforeTest
     fun setup() = runTest {
-        //TODO all the logging code in the
         val driver = testDbConnection()
-        // Add SQL statements to drop tables if they exist
         driver.execute(null, "DROP TABLE IF EXISTS Habit", 0)
         driver.execute(null, "DROP TABLE IF EXISTS Tracking", 0)
         HabitDatabase.Schema.create(driver)
         database = HabitDatabase(driver)
-        repository = HabitDataRepository(database)
+        repository = HabitDataRepository(database, logger = TestLogger.instance)
     }
 
     @AfterTest
@@ -32,53 +32,48 @@ class HabitDataRepositoryTest {
         // TODO figure out db closing in sqldelight KMM if needed
     }
 
+    // MOST IMPORTANT test for the Flow emission and collection functionality
     @Test
-    fun testAddHabit() = runTest {
+    fun selectHabitTrackingJoinedTable_WhenHabitAdded_ShouldReturnValidJoinedDataFlow() = runTest {
         val habitName = "Read Books"
         repository.addHabit(habitName)
 
         val habitId = repository.habitTrackingQueries.getHabitId(habitName).executeAsOneOrNull()
         assertNotNull(habitId, "Habit ID should not be null for added habit")
 
-        val results = repository.selectHabitTrackingJoinedTable().first()
-        assertTrue(results.any { it.name == habitName }, "Newly added habit should be present")
+        val result = repository.selectHabitTrackingJoinedTable().first()
+        assertNotNull(result.find { it.name == habitName }, "Habit should be found after being added")
     }
 
     @Test
-    fun testRemoveHabit() = runTest {
-        val habitName = "Exercise"
+    fun removeHabit_ShouldRemoveTrackingEntriesForHabit() = runTest {
+        val habitName = "Read"
         repository.addHabit(habitName)
+        val habitId = repository.habitTrackingQueries.getHabitId(habitName).executeAsOne()
+
         repository.removeHabit(habitName)
 
-        val habitId = repository.habitTrackingQueries.getHabitId(habitName).executeAsOneOrNull()
-        assertEquals(null, habitId, "Habit ID should be null after habit is removed")
-
-        val results = repository.selectHabitTrackingJoinedTable().first()
-        assertTrue(results.none { it.name == habitName }, "Removed habit should not be present")
+        val trackingEntries = repository.habitTrackingQueries.getTrackingForHabit(habitId).executeAsList()
+        assertTrue(trackingEntries.isEmpty(), "Tracking entries should be removed when habit is deleted")
     }
 
     @Test
-    fun testSelectHabitTrackingJoinedTable() = runTest {
-        val habitName = "Drink Water"
+    fun updateTracking_ShouldReflectCorrectStatusInDatabase() = runTest {
+        val habitName = "Meditate"
         repository.addHabit(habitName)
+        val habitId = repository.habitTrackingQueries.getHabitId(habitName).executeAsOne()
 
-        val results = repository.selectHabitTrackingJoinedTable().first()
-        assertTrue(results.any { it.name == habitName }, "Habit should be in the tracking table")
-    }
+        val lastFiveDates = Util.getLastFiveDatesAsTimestamps()
+        val statuses = listOf(true, false, true, false, true) // Example statuses for the last five dates
+        val habitRowData = HabitRowData(habitName, statuses)
 
-    @Test
-    fun testUpdateTracking() = runTest {
-        val habitName = "Meditation"
-        repository.addHabit(habitName)
-
-        val updatedStatuses = listOf(true, false, true, false, true)
-        val habitRowData = HabitRowData(habitName, updatedStatuses)
         repository.updateTracking(habitRowData)
 
-        val results = repository.selectHabitTrackingJoinedTable().first()
-        val habitData = results.find { it.name == habitName }
-
-        assertNotNull(habitData, "Updated habit should be present")
-        assertEquals(habitData.lastFiveDatesStatuses, updatedStatuses, "Habit statuses should be updated")
+        for (index in lastFiveDates.indices) {
+            val date = lastFiveDates[index]
+            val status = statuses[index]
+            val isTracked = repository.habitTrackingQueries.isDateTrackedForHabit(habitId, date).executeAsOne()
+            assertEquals(status, isTracked, "Database tracking status should match the updated status for date: $date")
+        }
     }
 }

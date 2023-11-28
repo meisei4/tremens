@@ -2,6 +2,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import datasources.HabitDBDriverFactory
 import datasources.HabitDataRepository
 import mvvm.MainViewModel
+import utils.Logger
 import tremens.database.HabitDatabase
 
 
@@ -12,9 +13,8 @@ fun MainViewController() = ComposeUIViewController {
     AppScreen(
         viewModel =  MainViewModel(
             habitDataRepo = HabitDataRepository(
-                database = createTestDatabase(
-                    driverFactory = HabitDBDriverFactory()
-                )
+                database = createTestDatabase(driverFactory = HabitDBDriverFactory()),
+                logger = Logger.instance
             )
         )
     )

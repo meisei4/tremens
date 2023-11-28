@@ -1,7 +1,9 @@
 package utils
 
-expect class Logger : LoggerInterface {
+expect open class Logger() {
+    open fun log(message: String)
+
     companion object {
-        fun log(message: String)
+        val instance: Logger
     }
 }

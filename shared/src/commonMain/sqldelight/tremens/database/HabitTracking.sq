@@ -20,6 +20,26 @@ CREATE TABLE Tracking (
     FOREIGN KEY (HabitID) REFERENCES Habit(HabitID)
 );
 
+getTrackingForHabit:
+SELECT * FROM Tracking WHERE HabitID = ?;
+
+isDateTrackedForHabit:
+SELECT EXISTS(
+    SELECT 1 FROM Tracking
+    WHERE HabitID = ? AND Date = ?
+);
+
+selectHabitWithRecentTracking:
+SELECT Habit.HabitID, Habit.Name, groupedTracking.Dates
+FROM Habit
+LEFT JOIN (
+    SELECT HabitID, GROUP_CONCAT(Date) AS Dates
+    FROM Tracking
+    WHERE Date >= ? AND Date <= ?
+    GROUP BY HabitID
+) AS groupedTracking ON Habit.HabitID = groupedTracking.HabitID;
+
+
 --TODO not sure if this IGNORE actually works well with the UNIQUE constraint
 insertTracking:
 INSERT OR IGNORE INTO Tracking(HabitID, Date) VALUES (?, ?);
@@ -31,13 +51,3 @@ AND Date = ?;
 
 deleteTrackingForHabit:
 DELETE FROM Tracking WHERE HabitID = (SELECT HabitID FROM Habit WHERE Name = ?);
-
-selectHabitWithRecentTracking:
-SELECT Habit.HabitID, Habit.Name, groupedTracking.Dates
-FROM Habit
-LEFT JOIN (
-    SELECT HabitID, GROUP_CONCAT(Date) AS Dates
-    FROM Tracking
-    WHERE Date >= ? AND Date <= ?
-    GROUP BY HabitID
-) AS groupedTracking ON Habit.HabitID = groupedTracking.HabitID;

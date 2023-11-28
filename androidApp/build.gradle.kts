@@ -1,27 +1,28 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
+    kotlin("multiplatform")
     id("com.android.application")
-    kotlin("android")
     id("org.jetbrains.compose")
 }
 
-
 kotlin {
-    //androidTarget()
+    androidTarget()
     sourceSets {
-        //val androidMain by getting {
-        dependencies {
-            implementation(project(":shared"))
+        val androidMain by getting {
+            dependencies {
+                implementation(project(":shared"))
+            }
         }
-        //}
     }
 }
 
 android {
-    namespace = "com.delerium.tremens.android"
+    namespace = "com.myapplication"
     compileSdk = libs.versions.compileSdk.get().toInt()
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        applicationId = "com.delerium.tremens"
+        applicationId = "com.myapplication.MyApplication"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
@@ -45,10 +46,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
     lint {
         warningsAsErrors = false
         abortOnError = true
@@ -62,6 +59,10 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
     }
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 dependencies {

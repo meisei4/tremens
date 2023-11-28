@@ -5,7 +5,6 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
-import kotlinx.datetime.todayAt
 import kotlinx.datetime.todayIn
 
 class Util {
@@ -23,7 +22,4 @@ class Util {
             return List(5) { i -> current.minus(i, DateTimeUnit.DAY).atStartOfDayIn(TIME_ZONE).epochSeconds}.reversed()
         }
     }
-
-
-
 }

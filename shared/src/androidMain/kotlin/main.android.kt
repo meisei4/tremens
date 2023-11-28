@@ -4,6 +4,7 @@ import datasources.HabitDBDriverFactory
 import datasources.HabitDataRepository
 import tremens.database.HabitDatabase
 import mvvm.MainViewModel
+import utils.Logger
 
 actual fun getPlatformName(): String = "Android"
 
@@ -11,7 +12,8 @@ actual fun getPlatformName(): String = "Android"
 fun MainView() = AppScreen(
     viewModel = MainViewModel(
         habitDataRepo = HabitDataRepository(
-            database = createTestDatabase(HabitDBDriverFactory(LocalContext.current))
+            database = createTestDatabase(HabitDBDriverFactory(LocalContext.current)),
+            logger = Logger.instance
         )
     )
 )

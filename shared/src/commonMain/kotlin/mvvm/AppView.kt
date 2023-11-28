@@ -31,7 +31,8 @@ fun AppScreen(viewModel: MainViewModel) {
     }
 }
 
-//TODO Louis idea here for View<Screen thing, I forgot what it was
+// TODO Louis idea here for View<Screen thing, I forgot what it was. Also potentially
+// revamp based on the complexity in the amount of broken-out Composables
 @Composable
 fun AppView(
     newHabit: MutableState<String>,
@@ -52,7 +53,7 @@ fun AddHabitField(newHabitName: String, onValueChange: (String) -> Unit) {
         value = newHabitName,
         onValueChange = onValueChange,
         label = { Text("New Habit") },
-        singleLine = true // Add this to ensure the TextField does not expand to multiple lines
+        singleLine = true
     )
 }
 
@@ -60,7 +61,7 @@ fun AddHabitField(newHabitName: String, onValueChange: (String) -> Unit) {
 fun AddHabitButton(newHabitName: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        enabled = newHabitName.isNotEmpty() // Check if the habit name is not empty
+        enabled = newHabitName.isNotEmpty()
     ) {
         Text("+")
     }
@@ -106,11 +107,6 @@ fun HabitRowHeader(title: String, lastFiveDays: List<String>) {
 @Composable
 fun HabitList(viewModel: MainViewModel) {
     val habitRows by viewModel.habitRows.collectAsState()
-
-    LaunchedEffect(habitRows) {
-        //Logger.log("Habit list updated (View level): $habitRows")
-    }
-
     LazyColumn {
         itemsIndexed(habitRows) { index, habit ->
             HabitRow(
@@ -161,7 +157,7 @@ fun DeleteHabitButton(removeHabitFunction: () -> Unit) {
             imageVector = Icons.Default.Delete,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
-            tint = Color.Black // Set a color tint
+            tint = Color.Black
         )
     }
 }
@@ -190,7 +186,7 @@ fun StatusCircle(isDone: Boolean, updateHabitFunction: (Boolean) -> Unit) {
     Box(
         Modifier
             .size(24.dp)
-            .clickable { updateHabitFunction(!isDone) } // toggle the status
+            .clickable { updateHabitFunction(!isDone) }
     ) {
         Canvas(Modifier.fillMaxSize()) {
             drawCircle(
@@ -201,5 +197,4 @@ fun StatusCircle(isDone: Boolean, updateHabitFunction: (Boolean) -> Unit) {
         }
     }
 }
-
 expect fun getPlatformName(): String

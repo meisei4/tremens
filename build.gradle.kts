@@ -1,3 +1,8 @@
+// TODO: really look at all the gradle build files (including the toml file
+//  and properties) and trim out any unnecessary bloat. These gradle files
+//  are a blend of the jetbrains multiplatform demo styles and
+//  the KaMPKit multiplatform repo so there is likely unneeded stuff
+
 plugins {
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
@@ -5,7 +10,6 @@ plugins {
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.compose) apply false
-    //alias(libs.plugins.ksp) apply false
 }
 
 allprojects {

@@ -1,9 +1,10 @@
 package utils
 
-actual class Logger : LoggerInterface {
-    actual companion object {
-        actual fun log(message: String) {
-            platform.Foundation.NSLog("DEBUG: $message")
+actual open class Logger {
+    actual open fun log(message: String) {
+            platform.Foundation.NSLog("tremens LOG: $message")
         }
+    actual companion object {
+        actual val instance = Logger()
     }
 }
